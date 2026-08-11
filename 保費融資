@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>保費融資 · 匯率情境試算</title>
+<style>
+  :root{
+    --navy:#16233f;
+    --navy-2:#1e3050;
+    --ink:#20293b;
+    --gold:#bd9a44;
+    --gold-soft:#e7d9ad;
+    --green:#1a6a52;
+    --green-soft:#d6e7de;
+    --amber:#c9902c;
+    --amber-soft:#f3e4c4;
+    --rust:#9f4130;
+    --rust-soft:#eed4cc;
+    --peri:#7f86ad;
+    --peri-soft:#dfe1ee;
+    --ivory:#f6f2e9;
+    --paper:#ffffff;
+    --line:#e4ddcd;
+    --muted:#6c7385;
+    --display:"Noto Serif TC","Songti TC","Source Han Serif TC","Georgia",serif;
+    --body:"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+    --num:"SF Mono",ui-monospace,"Roboto Mono","Menlo",monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--body);
+    color:var(--ink);
+    background:var(--ivory);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1040px;margin:0 auto;padding:26px 20px 60px;}
+
+  /* ---- Header ---- */
+  .masthead{
+    background:
+      linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);
+    color:#f4efe2;
+    border-radius:6px;
+    padding:26px 30px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(22,35,63,.18);
+  }
+  .masthead::after{
+    content:"";position:absolute;right:-40px;top:-40px;width:220px;height:220px;
+    border:1px solid rgba(189,154,68,.35);border-radius:50%;
+  }
+  .masthead::before{
+    content:"";position:absolute;right:14px;top:14px;bottom:14px;width:5px;
+    background:var(--gold);border-radius:3px;
+  }
+  .eyebrow{
+    font-size:12px;letter-spacing:.32em;color:var(--gold-soft);
+    text-transform:uppercase;margin:0 0 8px;font-weight:600;
+  }
+  .masthead h1{
+    font-family:var(--display);font-weight:700;
+    font-size:27px;margin:0;letter-spacing:.02em;line-height:1.25;
+  }
+  .masthead .sub{margin:9px 0 0;font-size:13.5px;color:#cfd6e6;max-width:640px;}
+  .spot{
+    margin-top:14px;display:inline-flex;align-items:baseline;gap:8px;
+    background:rgba(189,154,68,.14);border:1px solid rgba(189,154,68,.4);
+    padding:5px 12px;border-radius:20px;font-size:12.5px;color:var(--gold-soft);
+  }
+  .spot b{font-family:var(--num);color:#fff;font-size:13.5px;}
+
+  /* ---- Section frame ---- */
+  .card{
+    background:var(--paper);border:1px solid var(--line);border-radius:6px;
+    padding:20px 22px;margin-top:18px;box-shadow:0 2px 10px rgba(22,35,63,.04);
+  }
+  .card > h2{
+    font-family:var(--display);font-size:16.5px;margin:0 0 4px;color:var(--navy);
+    display:flex;align-items:center;gap:10px;
+  }
+  .card > h2::before{content:"";width:16px;height:2px;background:var(--gold);display:inline-block;}
+  .card > .hint{font-size:12.5px;color:var(--muted);margin:0 0 16px;}
+
+  /* ---- Inputs ---- */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 18px;}
+  .field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px;font-weight:600;}
+  .field .inp{position:relative;}
+  .field input[type=number]{
+    width:100%;font-family:var(--num);font-size:15px;color:var(--ink);
+    padding:9px 40px 9px 11px;border:1px solid var(--line);border-radius:5px;
+    background:#fcfbf7;transition:border-color .15s,box-shadow .15s;
+  }
+  .field input[type=number]:focus{
+    outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(189,154,68,.15);
+    background:#fff;
+  }
+  .field .unit{
+    position:absolute;right:11px;top:50%;transform:translateY(-50%);
+    font-size:12px;color:var(--muted);pointer-events:none;
+  }
+  .derived{
+    grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px;margin-top:2px;
+  }
+  .chip{
+    background:var(--ivory);border:1px solid var(--line);border-radius:5px;
+    padding:8px 13px;font-size:12.5px;color:var(--muted);
+  }
+  .chip b{font-family:var(--num);color:var(--navy);font-size:14px;margin-left:6px;}
+  .toolbar{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .btn{
+    font-family:var(--body);font-size:13px;font-weight:600;cursor:pointer;
+    border-radius:5px;padding:9px 16px;border:1px solid var(--navy);
+    background:var(--navy);color:#fff;transition:opacity .15s,transform .05s;
+  }
+  .btn:hover{opacity:.9;}
+  .btn:active{transform:translateY(1px);}
+  .btn.ghost{background:#fff;color:var(--navy);}
+  .btn.gold{background:var(--gold);border-color:var(--gold);color:#231c07;}
+
+  /* ---- Scenario slider ---- */
+  .fx-live{display:grid;grid-template-columns:1fr;gap:6px;margin-bottom:20px;}
+  .fx-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;}
+  .fx-read{font-size:13px;color:var(--muted);}
+  .fx-read b{font-family:var(--num);font-size:22px;color:var(--navy);}
+  .fx-move{font-family:var(--num);font-size:13px;font-weight:600;padding:2px 9px;border-radius:14px;}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:4px;
+    background:linear-gradient(90deg,var(--green) 0%,var(--gold) 50%,var(--rust) 100%);
+    margin:14px 0 4px;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:22px;height:22px;border-radius:50%;
+    background:#fff;border:3px solid var(--navy);cursor:pointer;
+    box-shadow:0 2px 6px rgba(0,0,0,.2);margin-top:0;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid var(--navy);cursor:pointer;
+  }
+  .rail-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:var(--num);}
+
+  /* ---- Two waterfalls ---- */
+  .falls{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .fall{border:1px solid var(--line);border-radius:6px;padding:16px 14px 12px;background:#fdfcf9;}
+  .fall h3{
+    font-family:var(--display);font-size:14px;margin:0 0 2px;color:var(--navy);
+    display:flex;justify-content:space-between;align-items:baseline;
+  }
+  .fall h3 .rate{font-family:var(--num);font-size:20px;font-weight:700;}
+  .fall .yr{font-size:11.5px;color:var(--muted);margin-bottom:14px;}
+  .chart{display:flex;align-items:flex-end;gap:10px;height:172px;padding-top:18px;}
+  .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;}
+  .bar{width:100%;border-radius:3px 3px 0 0;position:relative;transition:height .35s ease,margin .35s ease;}
+  .bar .val{
+    position:absolute;top:-16px;left:50%;transform:translateX(-50%);
+    font-family:var(--num);font-size:10.5px;color:var(--ink);white-space:nowrap;font-weight:600;
+  }
+  .bar.sv{background:var(--gold);}
+  .bar.ded{background:var(--peri);}
+  .bar.net{background:var(--green);}
+  .spacer{width:100%;background:transparent;transition:height .35s ease;}
+  .col .cap{font-size:10.5px;color:var(--muted);margin-top:7px;text-align:center;line-height:1.3;}
+  .fall .summary{
+    display:flex;justify-content:space-between;margin-top:12px;padding-top:11px;border-top:1px dashed var(--line);
+    font-size:12px;
+  }
+  .fall .summary .k{color:var(--muted);}
+  .fall .summary .v{font-family:var(--num);font-weight:700;font-size:14px;}
+
+  /* ---- Scenario table ---- */
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{
+    background:var(--navy);color:#f1ecdf;font-weight:600;font-size:12px;
+    padding:9px 10px;text-align:right;letter-spacing:.02em;
+  }
+  thead th:first-child{text-align:left;border-radius:5px 0 0 0;}
+  thead th:last-child{border-radius:0 5px 0 0;}
+  tbody td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);font-family:var(--num);}
+  tbody td:first-child{text-align:left;font-family:var(--body);color:var(--ink);font-weight:600;}
+  tbody tr.base{background:var(--ivory);}
+  tbody tr.base td:first-child::after{content:" · 基準";color:var(--gold);font-weight:700;font-size:11px;}
+  .tag{display:inline-block;min-width:70px;padding:3px 8px;border-radius:4px;font-weight:700;}
+  .g{background:var(--green-soft);color:var(--green);}
+  .a{background:var(--amber-soft);color:var(--amber);}
+  .r{background:var(--rust-soft);color:var(--rust);}
+  .legend{display:flex;gap:16px;margin-top:12px;font-size:11.5px;color:var(--muted);flex-wrap:wrap;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .dot{width:11px;height:11px;border-radius:3px;display:inline-block;}
+
+  /* ---- Breakeven ---- */
+  .be-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .be{
+    border:1px solid var(--line);border-radius:6px;padding:16px 18px;
+    background:linear-gradient(180deg,#fff, #fbf8f1);
+  }
+  .be .lab{font-size:12.5px;color:var(--muted);}
+  .be .rate{font-family:var(--num);font-size:26px;font-weight:700;color:var(--rust);margin:4px 0;}
+  .be .note{font-size:12px;color:var(--ink);}
+  .be .note b{color:var(--navy);font-family:var(--num);}
+
+  .foot{font-size:11.5px;color:var(--muted);margin-top:18px;line-height:1.7;}
+  .foot b{color:var(--ink);}
+
+  @media (max-width:720px){
+    .grid{grid-template-columns:1fr 1fr;}
+    .falls{grid-template-columns:1fr;}
+    .be-grid{grid-template-columns:1fr;}
+    .masthead h1{font-size:22px;}
+    .wrap{padding:18px 14px 48px;}
+  }
+  @media (max-width:460px){
+    .grid{grid-template-columns:1fr;}
+  }
+
+  /* ---- Print (A4) ---- */
+  @media print{
+    body{background:#fff;}
+    .wrap{max-width:none;padding:0;}
+    .toolbar,.fx-note{display:none !important;}
+    .card,.masthead{box-shadow:none;break-inside:avoid;}
+    .masthead{border:1px solid var(--navy);}
+    input[type=range]{display:none;}
+    @page{size:A4;margin:12mm;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">亞灣專屬 · 保費融資</p>
+    <h1>放大資產效能:保費融資策略試算</h1>
+    <p class="sub">調整保費、自備款、10/20 年解約金與匯率,即時重算年化報酬、匯率情境與損益兩平。保單美元計價、借款台幣計息——請留意幣別錯配對報酬的放大效果。</p>
+    <div class="spot">今日即期參考 USD/TWD 約 <b>32.2</b>　·　簡報期初假設 32.30</div>
+  </header>
+
+  <!-- INPUTS -->
+  <section class="card">
+    <h2>試算條件</h2>
+    <p class="hint">預設值還原你簡報的基準情境;修改任一欄位下方全部即時重算。</p>
+    <div class="grid">
+      <div class="field">
+        <label>總保費</label>
+        <div class="inp"><input type="number" id="premium" value="2000000" step="10000"><span class="unit">元</span></div>
+      </div>
+      <div class="field">
+        <label>自備款比例</label>
+        <div class="inp"><input type="number" id="dpRate" value="40" step="5" min="0" max="100"><span class="unit">%</span></div>
+      </div>
+      <div class="field">
+        <label>融資年利率</label>
+        <div class="inp"><input type="number" id="loanRate" value="2" step="0.1"><span class="unit">%</span></div>
+      </div>
+      <div class="field">
+        <label>期初 / 目前匯率 (USD→TWD)</label>
+        <div class="inp"><input type="number" id="baseRate" value="32.30" step="0.01"><span class="unit">元</span></div>
+      </div>
+      <div class="field">
+        <label>第 10 年解約金 <span style="font-weight:400">(期初匯率下)</span></label>
+        <div class="inp"><input type="number" id="sv10" value="3085504" step="1000"><span class="unit">元</span></div>
+      </div>
+      <div class="field">
+        <label>第 20 年解約金 <span style="font-weight:400">(期初匯率下)</span></label>
+        <div class="inp"><input type="number" id="sv20" value="4834789" step="1000"><span class="unit">元</span></div>
+      </div>
+      <div class="derived">
+        <div class="chip">自備款(投入本金)<b id="d-dp"></b></div>
+        <div class="chip">銀行融資本金<b id="d-loan"></b></div>
+        <div class="chip">每年利息<b id="d-int"></b></div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn ghost" id="btnReset">還原簡報預設</button>
+      <button class="btn gold" id="btnPrint">列印 / 匯出 PDF</button>
+    </div>
+  </section>
+
+  <!-- LIVE SCENARIO -->
+  <section class="card">
+    <h2>期末匯率情境 · 財務表現</h2>
+    <p class="hint">拖曳下方匯率軸,觀察解約金重估後兩期的期末淨值與年化報酬。台幣升值 → 美元資產換回台幣減少、負債不變,報酬遭槓桿放大侵蝕。</p>
+
+    <div class="fx-live">
+      <div class="fx-head">
+        <div class="fx-read">假設期末匯率　<b id="fxVal">32.30</b>　<span id="fxRel"></span></div>
+        <div class="fx-move" id="fxMove"></div>
+      </div>
+      <input type="range" id="fxSlider" min="23" max="40" step="0.01" value="32.30">
+      <div class="rail-labels"><span>23.00 (台幣強)</span><span>32.30 (期初)</span><span>40.00 (台幣弱)</span></div>
+    </div>
+
+    <div class="falls">
+      <div class="fall" id="fall10"></div>
+      <div class="fall" id="fall20"></div>
+    </div>
+  </section>
+
+  <!-- SCENARIO TABLE -->
+  <section class="card">
+    <h2>匯率情境矩陣</h2>
+    <p class="hint">以期初匯率為基準,台幣升值 / 貶值各 5%~20% 對單利年化報酬的影響。</p>
+    <table>
+      <thead>
+        <tr><th>情境</th><th>期末匯率</th><th>10 年單利年化</th><th>20 年單利年化</th></tr>
+      </thead>
+      <tbody id="scenBody"></tbody>
+    </table>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--green)"></i>穩健 ≥ 5%</span>
+      <span><i class="dot" style="background:var(--amber)"></i>邊際 0–5%</span>
+      <span><i class="dot" style="background:var(--rust)"></i>虧損 &lt; 0%</span>
+    </div>
+  </section>
+
+  <!-- BREAKEVEN -->
+  <section class="card">
+    <h2>損益兩平匯率</h2>
+    <p class="hint">自有資金(自備款)報酬歸零時的期末匯率——台幣需升值至此以上才會侵蝕本金。</p>
+    <div class="be-grid">
+      <div class="be" id="be10"></div>
+      <div class="be" id="be20"></div>
+    </div>
+  </section>
+
+  <p class="foot">
+    <b>模型假設:</b>保單美元計價、借款台幣計息;融資利率為單利、逐年繳息、本金到期償還。解約金為期初匯率下的台幣值,情境列以「解約金 × (期末匯率 ÷ 期初匯率)」重估,台幣負債固定不動。<b>單利年化報酬 = (期末淨值 − 自備款) ÷ 自備款 ÷ 年數</b>,期末淨值 = 解約金 − 融資本金 − 累計利息。<br>
+    本試算僅為結構示意,未計入解約費用、匯款成本、台幣利率調整及美元/保單 IRR 之非保證分紅波動;實際報酬將有差異。非要約或投資建議。
+  </p>
+
+</div>
+
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const ids=["premium","dpRate","loanRate","baseRate","sv10","sv20"];
+  const defaults={premium:2000000,dpRate:40,loanRate:2,baseRate:32.30,sv10:3085504,sv20:4834789};
+
+  const nf=n=>Math.round(n).toLocaleString("en-US");
+  const pf=n=>(n>=0?"+":"")+n.toFixed(2)+"%";
+  const rate2=n=>n.toFixed(2);
+
+  function readInputs(){
+    return {
+      P:+$("premium").value||0,
+      dpRate:+$("dpRate").value||0,
+      loanRate:+$("loanRate").value||0,
+      e0:+$("baseRate").value||1,
+      sv10:+$("sv10").value||0,
+      sv20:+$("sv20").value||0
+    };
+  }
+
+  // core: given surrender value at base rate, horizon, exit rate
+  function calc(svBase,years,exit,I){
+    const dp=I.P*I.dpRate/100;
+    const loan=I.P-dp;
+    const annualInt=loan*I.loanRate/100;
+    const sv=svBase*(exit/I.e0);
+    const totalInt=annualInt*years;
+    const net=sv-loan-totalInt;
+    const gain=net-dp;
+    const ret=dp!==0?gain/dp/years*100:0;
+    return {dp,loan,annualInt,sv,totalInt,net,gain,ret};
+  }
+
+  function breakeven(svBase,years,I){
+    const dp=I.P*I.dpRate/100;
+    const loan=I.P-dp;
+    const annualInt=loan*I.loanRate/100;
+    const reqSV=dp+loan+annualInt*years;
+    const eBE=I.e0*reqSV/svBase;
+    const appr=(I.e0-eBE)/I.e0*100;
+    return {eBE,appr};
+  }
+
+  function cls(ret){return ret>=5?"g":ret>=0?"a":"r";}
+
+  // ---- waterfall renderer ----
+  function renderFall(el,title,years,headline,c){
+    const scale=Math.max(c.sv,c.dp,1);
+    const H=172;
+    const h=v=>Math.max(0,v/scale*H);
+    const netTop=Math.max(0,c.net);
+    const cLevel=Math.max(0,c.net); // level after loan+interest deducted = net
+    // deduction bars float:
+    const loanSpacer=h(c.sv-c.loan);        // transparent under loan bar
+    const loanBar=h(c.loan);
+    const intSpacer=h(c.net<0?0:c.net);     // transparent under interest bar (sits above net)
+    const intBar=h(c.totalInt);
+    const retClass=cls(c.ret);
+    const retColor=retClass==="g"?"var(--green)":retClass==="a"?"var(--amber)":"var(--rust)";
+
+    el.innerHTML=`
+      <h3>${title}<span class="rate" style="color:${retColor}">${pf(c.ret)}</span></h3>
+      <div class="yr">${years} 年期 · 期末淨值推導</div>
+      <div class="chart">
+        <div class="col">
+          <div class="bar sv" style="height:${h(c.sv)}px"><span class="val">${nf(c.sv)}</span></div>
+          <div class="cap">解約金</div>
+        </div>
+        <div class="col">
+          <div class="spacer" style="height:${loanSpacer}px"></div>
+          <div class="bar ded" style="height:${loanBar}px"><span class="val">−${nf(c.loan)}</span></div>
+          <div class="cap">扣融資本金</div>
+        </div>
+        <div class="col">
+          <div class="spacer" style="height:${intSpacer}px"></div>
+          <div class="bar ded" style="height:${intBar}px"><span class="val">−${nf(c.totalInt)}</span></div>
+          <div class="cap">扣${years}年利息</div>
+        </div>
+        <div class="col">
+          <div class="bar net" style="height:${h(netTop)}px;background:${c.net<0?'var(--rust)':'var(--green)'}"><span class="val">${nf(c.net)}</span></div>
+          <div class="cap">期末淨值</div>
+        </div>
+      </div>
+      <div class="summary">
+        <span class="k">浮盈(淨值−本金)</span>
+        <span class="v" style="color:${c.gain<0?'var(--rust)':'var(--navy)'}">${c.gain>=0?'+':''}${nf(c.gain)}</span>
+      </div>
+      <div class="summary" style="border-top:none;padding-top:2px;margin-top:2px">
+        <span class="k">投入本金 ${nf(c.dp)} · 單利年化</span>
+        <span class="v" style="color:${retColor}">${pf(c.ret)}</span>
+      </div>`;
+  }
+
+  // ---- scenario table ----
+  const scen=[
+    {t:"台幣升值 20%",m:-20},{t:"台幣升值 15%",m:-15},{t:"台幣升值 10%",m:-10},{t:"台幣升值 5%",m:-5},
+    {t:"匯率持平",m:0},
+    {t:"台幣貶值 5%",m:5},{t:"台幣貶值 10%",m:10},{t:"台幣貶值 15%",m:15},{t:"台幣貶值 20%",m:20}
+  ];
+  function renderTable(I){
+    const body=$("scenBody");body.innerHTML="";
+    scen.forEach(s=>{
+      const exit=I.e0*(1+s.m/100);
+      const r10=calc(I.sv10,10,exit,I).ret;
+      const r20=calc(I.sv20,20,exit,I).ret;
+      const tr=document.createElement("tr");
+      if(s.m===0)tr.className="base";
+      tr.innerHTML=`<td>${s.t}</td><td>${rate2(exit)}</td>`+
+        `<td><span class="tag ${cls(r10)}">${pf(r10)}</span></td>`+
+        `<td><span class="tag ${cls(r20)}">${pf(r20)}</span></td>`;
+      body.appendChild(tr);
+    });
+  }
+
+  function renderBE(I){
+    const b10=breakeven(I.sv10,10,I),b20=breakeven(I.sv20,20,I);
+    $("be10").innerHTML=`<div class="lab">10 年期</div>
+      <div class="rate">${rate2(b10.eBE)}</div>
+      <div class="note">台幣需升值逾 <b>${b10.appr.toFixed(1)}%</b>(匯率跌破此值)報酬才轉負。</div>`;
+    $("be20").innerHTML=`<div class="lab">20 年期</div>
+      <div class="rate">${rate2(b20.eBE)}</div>
+      <div class="note">台幣需升值逾 <b>${b20.appr.toFixed(1)}%</b>(匯率跌破此值)報酬才轉負。</div>`;
+  }
+
+  function syncSlider(I){
+    const sl=$("fxSlider");
+    // keep slider centred around base; widen range if base moved a lot
+    sl.min=(I.e0*0.72).toFixed(2);
+    sl.max=(I.e0*1.24).toFixed(2);
+    document.querySelectorAll(".rail-labels span")[1].textContent=rate2(I.e0)+" (期初)";
+    document.querySelectorAll(".rail-labels span")[0].textContent=sl.min+" (台幣強)";
+    document.querySelectorAll(".rail-labels span")[2].textContent=sl.max+" (台幣弱)";
+  }
+
+  function renderLive(){
+    const I=readInputs();
+    const exit=+$("fxSlider").value;
+    const move=(exit-I.e0)/I.e0*100; // positive = TWD weaker
+    $("fxVal").textContent=rate2(exit);
+    const moveEl=$("fxMove");
+    if(Math.abs(move)<0.05){
+      $("fxRel").textContent="(匯率持平)";
+      moveEl.textContent="基準";moveEl.style.background="var(--ivory)";moveEl.style.color="var(--muted)";
+    }else if(move<0){
+      $("fxRel").textContent="";
+      moveEl.textContent="台幣升值 "+Math.abs(move).toFixed(1)+"%";
+      moveEl.style.background="var(--peri-soft)";moveEl.style.color="var(--navy)";
+    }else{
+      $("fxRel").textContent="";
+      moveEl.textContent="台幣貶值 "+move.toFixed(1)+"%";
+      moveEl.style.background="var(--green-soft)";moveEl.style.color="var(--green)";
+    }
+    renderFall($("fall10"),"10 年期",10,10.5,calc(I.sv10,10,exit,I));
+    renderFall($("fall20"),"20 年期",20,14.7,calc(I.sv20,20,exit,I));
+  }
+
+  function renderAll(){
+    const I=readInputs();
+    const dp=I.P*I.dpRate/100, loan=I.P-dp, annualInt=loan*I.loanRate/100;
+    $("d-dp").textContent=nf(dp);
+    $("d-loan").textContent=nf(loan);
+    $("d-int").textContent=nf(annualInt)+" /年";
+    syncSlider(I);
+    renderLive();
+    renderTable(I);
+    renderBE(I);
+  }
+
+  // events
+  ids.forEach(id=>$(id).addEventListener("input",()=>{
+    // if base rate changed, re-centre slider to base
+    if(id==="baseRate"){ $("fxSlider").value=(+$("baseRate").value||32.3); }
+    renderAll();
+  }));
+  $("fxSlider").addEventListener("input",renderLive);
+  $("btnReset").addEventListener("click",()=>{
+    ids.forEach(id=>$(id).value=defaults[id]);
+    $("fxSlider").value=defaults.baseRate;
+    renderAll();
+  });
+  $("btnPrint").addEventListener("click",()=>window.print());
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
