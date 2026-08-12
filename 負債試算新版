@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>結構化配置・報告產生器</title>
+<style>
+  :root{
+    --ink:#12161c; --ink2:#1d2531; --paper:#f6f3ec; --line:#d8d0c2;
+    --brass:#b08d57; --brass-d:#8f6f3e; --clay:#a8432e; --sage:#5f7d5c;
+    --muted:#6b6357; --panel:#eae4d7;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC","Heiti TC",sans-serif;
+    font-variant-numeric:tabular-nums; -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:24px 20px 80px}
+  h1{font-size:26px;font-weight:800;letter-spacing:.5px;margin:0 0 2px}
+  .sub{color:var(--muted);font-size:13px;letter-spacing:2px;text-transform:uppercase;margin-bottom:22px}
+  .brass{color:var(--brass-d)}
+
+  /* ---- input panel ---- */
+  .controls{
+    background:var(--ink); color:#efe9dc; border-radius:14px; padding:20px 22px;
+    display:grid; grid-template-columns:repeat(3,1fr); gap:16px 20px; margin-bottom:14px;
+  }
+  .controls h2{grid-column:1/-1;margin:0 0 2px;font-size:13px;letter-spacing:3px;color:var(--brass);font-weight:700}
+  .fld label{display:block;font-size:12px;color:#b9b1a2;margin-bottom:5px}
+  .fld .hint{font-size:11px;color:#7d766a;margin-top:4px;line-height:1.35}
+  .inputrow{display:flex;align-items:center;background:#0b0e13;border:1px solid #2a323f;border-radius:8px;overflow:hidden}
+  .inputrow input{
+    width:100%;border:0;background:transparent;color:#f6f3ec;font:inherit;
+    font-size:19px;font-weight:700;padding:9px 10px;text-align:right;font-variant-numeric:tabular-nums;
+  }
+  .inputrow input:focus{outline:none}
+  .inputrow .u{padding:0 11px;color:#8a8272;font-size:13px;white-space:nowrap;border-left:1px solid #2a323f}
+  .fixed{display:flex;gap:8px;flex-wrap:wrap;grid-column:1/-1;padding-top:4px;border-top:1px solid #2a323f;margin-top:2px}
+  .chip{background:#0b0e13;border:1px solid #2a323f;border-radius:20px;padding:5px 13px;font-size:12px;color:#c9c1b2}
+  .chip b{color:var(--brass)}
+  .actions{grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;margin-top:2px}
+  .btn{border:1px solid var(--brass);background:transparent;color:var(--brass);border-radius:8px;padding:8px 16px;font:inherit;font-size:13px;cursor:pointer;font-weight:600}
+  .btn:hover{background:var(--brass);color:var(--ink)}
+  .btn.ghost{border-color:#3a4250;color:#b9b1a2}
+  .btn.ghost:hover{background:#0b0e13;color:#efe9dc}
+
+  /* ---- report ---- */
+  .rpt-title{display:flex;align-items:baseline;gap:10px;margin:30px 2px 12px}
+  .rpt-title .no{font-size:12px;font-weight:800;color:#fff;background:var(--ink);border-radius:5px;padding:3px 8px;letter-spacing:1px}
+  .rpt-title h3{margin:0;font-size:19px;font-weight:800}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+
+  .grid{display:grid;gap:14px}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .stat{background:var(--panel);border-radius:10px;padding:14px 16px}
+  .stat .k{font-size:12px;color:var(--muted);margin-bottom:6px}
+  .stat .v{font-size:24px;font-weight:800;line-height:1.1}
+  .stat .v small{font-size:13px;font-weight:600;color:var(--muted)}
+  .stat .note{font-size:11px;color:var(--muted);margin-top:5px}
+  .stat.dark{background:var(--ink);color:#f6f3ec}
+  .stat.dark .k{color:#b9b1a2}
+  .stat.dark .note{color:#8a8272}
+  .stat.gold{background:linear-gradient(135deg,#c6a568,#a8843f);color:#20170a}
+  .stat.gold .k{color:#4a3714}
+  .stat.gold .note{color:#4a3714}
+
+  /* core params */
+  .param{display:flex;align-items:center;gap:14px;padding:14px 4px;border-bottom:1px solid var(--line)}
+  .param:last-child{border-bottom:0}
+  .param .pct{font-size:30px;font-weight:800;min-width:120px}
+  .param .pct.up{color:var(--brass-d)} .param .pct.dn{color:var(--clay)} .param .pct.sp{color:var(--sage)} .param .pct.pl{color:var(--ink)}
+  .param .pmeta .t{font-weight:700} .param .pmeta .d{font-size:12px;color:var(--muted)}
+
+  /* cashflow */
+  .cf{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  .cf .yr{border:1px solid var(--line);border-radius:10px;padding:14px}
+  .cf .yr h4{margin:0 0 8px;font-size:14px;color:var(--ink2)}
+  .cf .line{display:flex;justify-content:space-between;font-size:13px;padding:2px 0;color:#3a3a3a}
+  .cf .line .neg{color:var(--clay)}
+  .cf .gap{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-weight:800;color:var(--clay);font-size:15px;text-align:right}
+  .cf .yr.y1{background:var(--panel)}
+  .cf .yr.y1 .fill{font-size:13px;color:var(--muted);margin-top:6px}
+  .insight{margin-top:14px;background:#fbf9f4;border-left:3px solid var(--brass);padding:11px 14px;font-size:13px;color:#4a4335;border-radius:0 8px 8px 0}
+  .insight b{color:var(--clay)}
+
+  /* waterfall */
+  .wf-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:4px 0}
+  .wf{display:flex;align-items:stretch;gap:4px;height:250px;min-width:430px}
+  .wf .col{flex:1;display:flex;flex-direction:column;min-width:0}
+  .wf .col.delta{flex:.65;justify-content:center;align-items:center}
+  .wf .track{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;min-height:0}
+  .wf .barlabel{font-size:12px;font-weight:800;white-space:nowrap;margin-bottom:4px;line-height:1.1;text-align:center;color:var(--ink)}
+  .wf .barlabel.green{color:var(--sage)}
+  .wf .bar{width:64%;border-radius:3px 3px 0 0;transition:height .35s ease}
+  .wf .bar.pos,.wf .bar.stable{background:var(--ink)}
+  .wf .bar.surplus{background:var(--sage)}
+  .wf .bar.capped{border-radius:0}
+  .wf .dchip{font-size:12px;font-weight:800;color:var(--clay);white-space:nowrap;background:#f7ede9;border-radius:5px;padding:3px 7px}
+  .wf .xlab{margin-top:8px;font-size:11px;color:var(--muted);text-align:center;line-height:1.3;min-height:32px}
+  .wf .xlab b{color:var(--ink);font-size:12px;display:block}
+
+  /* legacy scenarios */
+  .scn{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .scn .box{border:1px solid var(--line);border-radius:10px;padding:16px}
+  .scn .box.b{border-color:var(--brass);background:#fdfbf6}
+  .scn .box h4{margin:0 0 4px;font-size:15px}
+  .scn .box .assume{font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.45}
+  .scn .big{font-size:15px;line-height:1.7}
+  .scn .big .amt{font-size:26px;font-weight:800;color:var(--ink)}
+  .scn .box.b .big .amt{color:var(--brass-d)}
+  .scn .yrline{display:flex;justify-content:space-between;font-size:13px;color:#4a4335;padding:3px 0}
+  .scn .formula{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5;font-family:ui-monospace,"Menlo",monospace}
+
+  /* compare table */
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:11px 12px;text-align:center;border-bottom:1px solid var(--line)}
+  th{background:var(--ink);color:#f6f3ec;font-weight:700;font-size:13px}
+  th:first-child,td:first-child{text-align:left;color:var(--muted)}
+  tbody tr:nth-child(even){background:#faf8f2}
+  td.hl{font-weight:800}
+  td.col-best{background:#fdf7ea!important}
+  th.col-best{background:var(--brass-d)!important;color:#fff!important}
+  tr.eff td{font-weight:800;color:var(--ink)}
+  tr.eff td.p1{color:var(--brass-d)} tr.eff td.p2{color:var(--clay)}
+
+  .foot{margin-top:26px;font-size:12px;color:var(--muted);line-height:1.7;border-top:1px solid var(--line);padding-top:16px}
+  .foot b{color:var(--ink2)}
+
+  @media screen and (max-width:820px){
+    .controls,.g4,.g3,.g2,.cf,.scn{grid-template-columns:1fr}
+    .wf{height:190px}
+  }
+  @media print{
+    @page{ size:A4 portrait; margin:11mm 10mm; }
+    html,body{background:#fff!important}
+    *{ -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
+    .controls,.actions,.no-print{display:none!important}
+
+    /* fit A4 width instead of 1180px screen width */
+    .wrap{ max-width:100%; width:100%; padding:0; margin:0 }
+    h1{font-size:18px;margin-top:0}
+    .sub{font-size:10px;letter-spacing:1.5px;margin-bottom:8px}
+
+    /* keep each section title glued to its card; never split a card */
+    .rpt-title{ margin:9px 0 5px; break-after:avoid; page-break-after:avoid }
+    .rpt-title .no{padding:2px 6px}
+    .rpt-title h3{font-size:15px}
+    .card{ border-color:#ccc; padding:12px 14px; break-inside:avoid; page-break-inside:avoid }
+
+    /* tighten components so everything fits the A4 column */
+    .grid{gap:8px}
+    .stat{padding:9px 11px;border-radius:8px}
+    .stat .k{font-size:10px;margin-bottom:3px}
+    .stat .v{font-size:16px}
+    .stat .v small{font-size:10px}
+    .stat .note{font-size:9px;margin-top:3px}
+
+    .param{padding:7px 2px}
+    .param .pct{font-size:21px;min-width:74px}
+    .param .pmeta .t{font-size:12px}
+    .param .pmeta .d{font-size:9.5px}
+
+    .cf{gap:8px}
+    .cf .yr{padding:9px}
+    .cf .yr h4{font-size:12px}
+    .cf .line{font-size:10.5px}
+    .cf .gap{font-size:12px}
+    .cf .yr.y1 .fill{font-size:9.5px}
+    .insight{font-size:10px;padding:8px 10px}
+
+    .wf{height:150px;padding-top:16px}
+    .wf .lbl{font-size:9.5px}
+    .wf .xlab{font-size:8.5px}
+    .wf .bar{transition:none}
+
+    .scn{gap:10px}
+    .scn .box{padding:11px}
+    .scn .box h4{font-size:12px}
+    .scn .box .assume{font-size:9.5px;margin-bottom:8px}
+    .scn .big{font-size:11px}
+    .scn .big .amt{font-size:18px}
+    .scn .yrline{font-size:10.5px}
+    .scn .formula{font-size:8.5px}
+
+    table{font-size:10.5px}
+    th,td{padding:6px 6px}
+    th{font-size:10.5px}
+
+    .foot{font-size:9px;line-height:1.5;margin-top:12px;break-inside:avoid;page-break-inside:avoid}
+
+    /* pagination: 01+02 / 03+04 / 05+06 → three clean pages */
+    #pg2{ break-before:page; page-break-before:always }
+    #pg3{ break-before:page; page-break-before:always }
+  }
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>結構化配置・<span class="brass">報告產生器</span></h1>
+  <div class="sub">Premium Financing &nbsp;/&nbsp; 舉債投保槓桿架構</div>
+
+  <!-- ============ INPUTS ============ -->
+  <div class="controls">
+    <h2>客戶參數（可調整）</h2>
+
+    <div class="fld">
+      <label>① 投資本金</label>
+      <div class="inputrow"><input id="P" type="number" step="100" value="3000"><span class="u">萬</span></div>
+    </div>
+    <div class="fld">
+      <label>② 銀行融資金額</label>
+      <div class="inputrow"><input id="L" type="number" step="100" value="2000"><span class="u">萬</span></div>
+    </div>
+    <div class="fld">
+      <label>⑤ 保障倍數（相對融資額）</label>
+      <div class="inputrow"><input id="K" type="number" step="0.01" value="3.99"><span class="u">倍</span></div>
+      <div class="hint">身故理賠金 = 保障倍數 × 融資額</div>
+    </div>
+
+    <div class="fld">
+      <label>投資預期報酬率</label>
+      <div class="inputrow"><input id="RINV" type="number" step="0.1" value="7"><span class="u">%</span></div>
+      <div class="hint">利差空間 = 投資報酬 − 融資利率</div>
+    </div>
+    <div class="fld">
+      <label>融資利率（還息不還本）</label>
+      <div class="inputrow"><input id="RLOAN" type="number" step="0.1" value="2"><span class="u">%</span></div>
+    </div>
+    <div class="fld">
+      <label>③ 每期保費（自動 = 融資 ÷ 3，可手動改）</label>
+      <div class="inputrow"><input id="PREM" type="number" step="1" value=""><span class="u">萬 ×3年</span></div>
+      <div class="hint">留白＝自動套用 1/3 規則。輸入 <b>700</b> 可完全對齊原始簡報。</div>
+    </div>
+    <div class="fld">
+      <label>情境B 配息再投資報酬</label>
+      <div class="inputrow"><input id="REINV" type="number" step="0.5" value="5"><span class="u">%</span></div>
+    </div>
+
+    <div class="fixed">
+      <span class="chip">遺產稅率 <b>20%</b></span>
+      <span class="chip">保費繳費 <b>3 年</b></span>
+      <span class="chip">初始資金 = 本金 + 一期保費</span>
+    </div>
+
+    <div class="actions">
+      <button class="btn" onclick="window.print()">列印 / 匯出 PDF</button>
+      <button class="btn ghost" onclick="loadDeck()">帶入原始簡報數字</button>
+      <button class="btn ghost" onclick="resetAll()">清空重填</button>
+    </div>
+  </div>
+
+  <!-- ============ REPORT ============ -->
+
+  <!-- 1 -->
+  <div class="rpt-title"><span class="no">01</span><h3 id="t1">初始資金的結構化配置</h3></div>
+  <div class="card">
+    <div class="grid g4">
+      <div class="stat"><div class="k">初始資金</div><div class="v" id="s_init"></div><div class="note">投資本金＋首期保費</div></div>
+      <div class="stat dark"><div class="k">總投資部位</div><div class="v" id="s_pos"></div><div class="note">投資本金＋銀行融資</div></div>
+      <div class="stat gold"><div class="k">身故理賠金</div><div class="v" id="s_db"></div><div class="note" id="s_db_n"></div></div>
+      <div class="stat"><div class="k">抵押率 (LTV)</div><div class="v" id="s_ltv"></div><div class="note">融資 ÷ 投資本金</div></div>
+    </div>
+    <div class="grid g3" style="margin-top:14px">
+      <div class="stat"><div class="k">每期保費</div><div class="v" id="s_prem"></div><div class="note">× 3 年</div></div>
+      <div class="stat"><div class="k">總保費</div><div class="v" id="s_tprem"></div></div>
+      <div class="stat"><div class="k">槓桿保障倍數</div><div class="v" id="s_lev"></div><div class="note">身故理賠 ÷ 融資額</div></div>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="rpt-title"><span class="no">02</span><h3>驅動架構運行的四大核心參數</h3></div>
+  <div class="card">
+    <div class="grid g2">
+      <div>
+        <div class="param"><div class="pct up" id="p_rinv">7%</div><div class="pmeta"><div class="t">投資預期收益</div><div class="d" id="p_div"></div></div></div>
+        <div class="param"><div class="pct sp" id="p_spr_pct">5%</div><div class="pmeta"><div class="t">初始利差空間</div><div class="d" id="p_spread"></div></div></div>
+      </div>
+      <div>
+        <div class="param"><div class="pct dn" id="p_rloan">2%</div><div class="pmeta"><div class="t">融資資金成本</div><div class="d" id="p_int"></div></div></div>
+        <div class="param"><div class="pct pl" id="p_prem_v"></div><div class="pmeta"><div class="t">保單建構成本</div><div class="d" id="p_prem"></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="rpt-title" id="pg2"><span class="no">03</span><h3>精確校準後：前三年現金流如何調整</h3></div>
+  <div class="card">
+    <div class="cf">
+      <div class="yr y1">
+        <h4>第一年</h4>
+        <div class="line"><span>首期保費</span><span id="cf_y1p"></span></div>
+        <div class="fill">保費已由初始資金（帳上預留）支付，投資部位不動。</div>
+      </div>
+      <div class="yr">
+        <h4>第二年</h4>
+        <div class="line"><span>配息</span><span id="cf_y2d"></span></div>
+        <div class="line"><span>利息</span><span class="neg" id="cf_y2i"></span></div>
+        <div class="line"><span>保費</span><span class="neg" id="cf_y2p"></span></div>
+        <div class="gap" id="cf_y2g"></div>
+      </div>
+      <div class="yr">
+        <h4>第三年</h4>
+        <div class="line"><span>配息（本金下降）</span><span id="cf_y3d"></span></div>
+        <div class="line"><span>利息</span><span class="neg" id="cf_y3i"></span></div>
+        <div class="line"><span>保費</span><span class="neg" id="cf_y3p"></span></div>
+        <div class="gap" id="cf_y3g"></div>
+      </div>
+    </div>
+    <div class="insight">💡 <b>私人財管洞察：</b>若無額外預留現金，前兩年缺口會以「贖回投資本金」支應保費，使投資部位逐年下降。</div>
+  </div>
+
+  <!-- 4 -->
+  <div class="rpt-title"><span class="no">04</span><h3>投資本金調整軌跡與第四年後的穩定現金流</h3></div>
+  <div class="card">
+    <div class="wf-scroll"><div class="wf" id="wf"></div></div>
+    <div class="insight">💡 挺過前三年的現金流陣痛期後，本金穩定在 <b id="wf_stable" style="color:var(--ink)"></b>，並開始每年產生 <b id="wf_surplus" style="color:var(--sage)"></b> 的正向現金流（配息 − 利息，保費已繳完）。</div>
+  </div>
+
+  <!-- 5 -->
+  <div class="rpt-title" id="pg3"><span class="no">05</span><h3>資產傳承終值推演：靜態維持 vs 複利滾存</h3></div>
+  <div class="card">
+    <div class="scn">
+      <div class="box">
+        <h4>情境 A：資產不增長（每年花掉配息）</h4>
+        <div class="assume" id="a_assume"></div>
+        <div class="big">10 / 20 年 稅後繼承<br><span class="amt" id="a_val"></span></div>
+        <div class="formula" id="a_f"></div>
+      </div>
+      <div class="box b">
+        <h4>情境 B：盈餘持續滾入（配息再投資）</h4>
+        <div class="assume" id="b_assume"></div>
+        <div class="yrline"><span>第 10 年 稅後繼承</span><span class="hl" id="b_10"></span></div>
+        <div class="yrline"><span>第 20 年 稅後繼承</span><span class="hl" id="b_20"></span></div>
+        <div class="formula" id="b_f"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="rpt-title"><span class="no">06</span><h3>三種路徑・三種終點：最終成果對比</h3></div>
+  <div class="card">
+    <table>
+      <thead><tr><th>比較項目</th><th>不規劃</th><th>方案1：每年花掉配息</th><th class="col-best">方案2：配息再投資</th></tr></thead>
+      <tbody>
+        <tr><td>投資部位</td><td id="c_pos0"></td><td id="c_pos1"></td><td class="col-best" id="c_pos2"></td></tr>
+        <tr><td>銀行負債</td><td>0</td><td id="c_l1"></td><td class="col-best" id="c_l2"></td></tr>
+        <tr><td>生前年領金流</td><td id="c_inc0"></td><td class="hl" id="c_inc1"></td><td class="col-best hl" id="c_inc2"></td></tr>
+        <tr><td>子女稅後繼承（10年）</td><td id="c_i10_0"></td><td id="c_i10_1"></td><td class="col-best" id="c_i10_2"></td></tr>
+        <tr><td>子女稅後繼承（20年）</td><td id="c_i20_0"></td><td id="c_i20_1"></td><td class="col-best" id="c_i20_2"></td></tr>
+        <tr class="eff"><td>最高資產傳承效益</td><td>基準 100%</td><td class="p1" id="c_e1"></td><td class="col-best p2" id="c_e2"></td></tr>
+      </tbody>
+    </table>
+    <div class="insight" style="margin-top:16px">💡 「生前年領金流」採用<b style="color:var(--ink)">第4年後可長期持續的淨現金流</b>（配息−利息）。原始簡報以「初始利差 <span id="c_spread_head"></span>」作為標題數字；本表以陣痛期後實際可持續金額為準，較符合合規揭露原則。</div>
+  </div>
+
+  <div class="foot">
+    <b>假設與揭露</b>　本試算為說明性示意，非保證收益。固定假設：投資報酬 7%、融資利率 2%（還息不還本）、保費繳費 3 年、第一年保費由初始資金預留支付。情境B 再投資採「年初投入」複利（annuity due）以對齊原始簡報；配息再投資報酬預設 5%，可調整。<br>
+    <b>合規提醒</b>　舉債投保／保費融資涉及「投資型商品適合度、融資成數與利率變動、外幣匯率、實質課稅（實質重於形式）與遺產稅認定、境外保單資格與 FSC 核准」等風險，實際製作客戶文件時務必保留完整風險揭露，勿僅呈現正向情境。稅率、免稅額與商品條件應以最新法規與核准條款為準。
+  </div>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const PREM_YEARS = 3;
+
+// number -> "1,234" or with decimals when needed
+function n(v, dp){
+  if(dp===undefined) dp = (Math.abs(v%1)>0.05 ? 1 : 0);
+  return Number(v.toFixed(dp)).toLocaleString('en-US',{minimumFractionDigits:dp,maximumFractionDigits:dp});
+}
+const w  = (v,dp)=> n(v,dp)+' 萬';
+// large amount: show 億 if >= 10000萬
+function big(v){
+  if(Math.abs(v) >= 10000){ return n(v/10000,2)+' 億'; }
+  return n(v,0)+' 萬';
+}
+// annuity-due future value factor
+function fvDue(g,nn){ return ((Math.pow(1+g,nn)-1)/g)*(1+g); }
+
+function calc(){
+  const P = +$('P').value || 0;
+  const L = +$('L').value || 0;
+  const K = +$('K').value || 0;
+  const tax = 0.20;                          // 固定 20%
+  const g   = (+$('REINV').value || 0)/100;
+  const R_INV  = (+$('RINV').value  || 0)/100;
+  const R_LOAN = (+$('RLOAN').value || 0)/100;
+  let prem  = $('PREM').value.trim()==='' ? L/PREM_YEARS : +$('PREM').value;
+
+  // derived
+  const totalPrem = prem * PREM_YEARS;
+  const initCap   = P + prem;
+  const pos0      = P + L;
+  const DB        = K * L;
+  const interest  = R_LOAN * L;
+  const ltv       = P>0 ? L/P*100 : 0;
+
+  // ---- 3-year trajectory ----
+  // Y1: reserve pays premium, position unchanged
+  const y2div = R_INV*pos0;
+  const y2net = y2div - interest - prem;   // negative gap
+  const pos2  = pos0 + y2net;
+  const y3div = R_INV*pos2;
+  const y3net = y3div - interest - prem;
+  const pos3  = pos2 + y3net;              // stable position
+  const surplus = R_INV*pos3 - interest;  // year 4+ sustainable net
+  const spread0 = y2div - interest;       // initial gross spread (headline)
+
+  // ---- inheritance ----
+  const netAssets = pos3 - L;
+  const inhNo   = initCap * (1-tax);                 // 不規劃
+  const incNo   = R_INV * initCap;
+  const inhA    = netAssets*(1-tax) + DB;            // 方案1 (10=20)
+  const acc10   = surplus * fvDue(g,10);
+  const acc20   = surplus * fvDue(g,20);
+  const inhB10  = (netAssets+acc10)*(1-tax) + DB;
+  const inhB20  = (netAssets+acc20)*(1-tax) + DB;
+  const eff1    = inhNo>0 ? inhA/inhNo*100 : 0;
+  const eff2    = inhNo>0 ? inhB20/inhNo*100 : 0;
+
+  // ================= RENDER =================
+  $('t1').textContent = `初始資金 ${n(initCap,0)} 萬的結構化配置`;
+
+  $('s_init').innerHTML  = w(initCap);
+  $('s_pos').innerHTML   = w(pos0);
+  $('s_db').innerHTML    = w(DB);
+  $('s_db_n').textContent= `保額 ${n(DB,0)} 萬`;
+  $('s_ltv').innerHTML   = n(ltv,1)+' <small>%</small>';
+  $('s_prem').innerHTML  = w(prem);
+  $('s_tprem').innerHTML = w(totalPrem);
+  $('s_lev').innerHTML   = n(DB/L,2)+' <small>倍</small>';
+
+  // params
+  $('p_rinv').textContent    = n(R_INV*100)+'%';
+  $('p_rloan').textContent   = n(R_LOAN*100)+'%';
+  $('p_spr_pct').textContent = n((R_INV-R_LOAN)*100)+'%';
+  $('p_div').textContent   = `配息型標的，年收益約 ${n(y2div,0)} 萬（${n(R_INV*100)}% × 總部位）`;
+  $('p_int').textContent   = `還息不還本，年支出約 ${n(interest,0)} 萬（${n(R_LOAN*100)}% × 融資）`;
+  $('p_spread').textContent= `初始每年套利淨額約 ${n(spread0,0)} 萬（配息 − 利息）`;
+  $('p_prem_v').textContent= n(prem,0);
+  $('p_prem').textContent  = `萬 × 3 年（總保費 ${n(totalPrem,0)} 萬）`;
+
+  // cashflow
+  $('cf_y1p').textContent = '−'+n(prem,0)+' 萬';
+  $('cf_y2d').textContent = n(y2div,0)+' 萬';
+  $('cf_y2i').textContent = '−'+n(interest,0)+' 萬';
+  $('cf_y2p').textContent = '−'+n(prem,0)+' 萬';
+  $('cf_y2g').textContent = '= '+n(y2net,0)+' 萬（資金缺口）';
+  $('cf_y3d').textContent = n(y3div,1)+' 萬';
+  $('cf_y3i').textContent = '−'+n(interest,0)+' 萬';
+  $('cf_y3p').textContent = '−'+n(prem,0)+' 萬';
+  $('cf_y3g').textContent = '= '+n(y3net,1)+' 萬（資金缺口）';
+
+  // waterfall — robust flex layout (label sits above each bar; no absolute positioning)
+  const maxV = pos0;
+  const SF = 82;                       // tallest bar = 82% of track, leaving room for labels
+  const hp = v => (v/maxV*SF).toFixed(2)+'%';
+  const bar   = (v,cls,lbl) => `<div class="col"><div class="track"><div class="barlabel">${lbl}</div><div class="bar ${cls}" style="height:${hp(v)}"></div></div><div class="xlab"><b>{X1}</b>{X2}</div></div>`;
+  const delta = txt => `<div class="col delta"><div class="dchip">${txt}</div></div>`;
+  const fill  = (t,x1,x2) => t.replace('{X1}',x1).replace('{X2}', x2?x2:'');
+
+  let html = '';
+  html += fill(bar(pos0,'pos', n(pos0,0)+'萬'), '期初投資總額', '');
+  html += delta(n(y2net,0)+'萬');
+  html += fill(bar(pos2,'pos', n(pos2,0)+'萬'), '第2年末淨額', '(贖回支應保費)');
+  html += delta(n(y3net,1)+'萬');
+  html += fill(bar(pos3,'stable', n(pos3,1)+'萬'), '第3年末淨額', '(再次贖回)');
+  // stable + surplus stacked column
+  html += `<div class="col"><div class="track">`
+        + `<div class="barlabel green">+${n(surplus,1)}萬</div>`
+        + `<div class="bar surplus" style="height:${hp(surplus)}"></div>`
+        + `<div class="bar stable capped" style="height:${hp(pos3)}"></div>`
+        + `</div><div class="xlab"><b>第4年起（穩定）</b>年淨盈餘</div></div>`;
+  $('wf').innerHTML = html;
+  $('wf_stable').textContent  = n(pos3,1)+' 萬';
+  $('wf_surplus').textContent = n(surplus,1)+' 萬';
+
+  // scenario A / B
+  $('a_assume').innerHTML = `假設第4年起盈餘不再投入，僅維持 ${n(pos3,0)} 萬部位。<br>（${n(pos3,0)} 資產 − ${n(L,0)} 負債 = <b style="color:var(--clay)">淨資產 ${n(netAssets,0)} 萬</b>）`;
+  $('a_val').textContent  = big(inhA);
+  $('a_f').textContent    = `(${n(netAssets,0)}萬 × ${n((1-tax)*100,0)}%) + ${n(DB,0)}萬 免稅保險金`;
+  $('b_assume').innerHTML = `假設部位不動，年淨盈餘 ${n(surplus,0)} 萬持續投入 ${n(g*100,1)}% 複利標的。<br>第10年增至 ${n(acc10,0)} 萬・第20年增至 ${n(acc20,0)} 萬。`;
+  $('b_10').textContent   = big(inhB10);
+  $('b_20').textContent   = big(inhB20);
+  $('b_f').innerHTML      = `(${n(netAssets,0)}+${n(acc10,0)})×${n((1-tax)*100,0)}% + ${n(DB,0)}萬保險金<br>(${n(netAssets,0)}+${n(acc20,0)})×${n((1-tax)*100,0)}% + ${n(DB,0)}萬保險金`;
+
+  // compare table
+  $('c_pos0').textContent = w(initCap);   // 不規劃 全額投入
+  $('c_pos1').textContent = w(P);
+  $('c_pos2').textContent = w(P);
+  $('c_l1').textContent   = w(L);
+  $('c_l2').textContent   = w(L);
+  $('c_inc0').textContent = w(incNo);
+  $('c_inc1').textContent = '💰 '+w(surplus);
+  $('c_inc2').textContent = w(surplus);
+  $('c_i10_0').textContent= big(inhNo);
+  $('c_i10_1').textContent= big(inhA);
+  $('c_i10_2').textContent= big(inhB10);
+  $('c_i20_0').textContent= big(inhNo);
+  $('c_i20_1').textContent= big(inhA);
+  $('c_i20_2').textContent= big(inhB20);
+  $('c_e1').textContent   = n(eff1,0)+'%';
+  $('c_e2').textContent   = n(eff2,0)+'%';
+  $('c_spread_head').textContent = n(spread0,0)+' 萬';
+}
+
+// premium placeholder follows L when field is empty
+function syncPremPlaceholder(){
+  const L = +$('L').value || 0;
+  $('PREM').placeholder = n(L/PREM_YEARS,1)+'（自動）';
+}
+
+['P','L','K','RINV','RLOAN','REINV','PREM'].forEach(id=>{
+  $(id).addEventListener('input', ()=>{ syncPremPlaceholder(); calc(); });
+});
+
+function loadDeck(){
+  $('P').value=3000; $('L').value=2000; $('K').value=3.99;
+  $('RINV').value=7; $('RLOAN').value=2; $('PREM').value=700; $('REINV').value=5;
+  syncPremPlaceholder(); calc();
+}
+function resetAll(){
+  $('P').value=''; $('L').value=''; $('K').value='';
+  $('RINV').value=7; $('RLOAN').value=2; $('PREM').value=''; $('REINV').value=5;
+  syncPremPlaceholder(); calc();
+}
+
+syncPremPlaceholder();
+calc();
+</script>
+</body>
+</html>
