@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>房貸投資套利現金流試算</title>
+<style>
+  :root{
+    --ink:#16233a;          /* deep navy */
+    --ink-2:#22344f;
+    --brass:#b0894a;        /* private-banking gold */
+    --brass-soft:#d8c294;
+    --parchment:#f6f3ec;
+    --card:#ffffff;
+    --line:#e4ddcf;
+    --muted:#6a7386;
+    --pos:#2f7a5b;          /* green cash flow */
+    --pos-soft:#e4f0e9;
+    --neg:#b0472e;          /* red cash flow */
+    --neg-soft:#f6e6e0;
+    --ink-05:rgba(22,35,58,.05);
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei","Helvetica Neue",Arial,sans-serif;
+    background:var(--parchment);
+    color:var(--ink);
+    line-height:1.55;
+    font-size:15px;
+  }
+  .wrap{max-width:960px;margin:0 auto;padding:0 20px 60px;}
+
+  /* ---------- header ---------- */
+  header{
+    background:linear-gradient(135deg,var(--ink) 0%,var(--ink-2) 100%);
+    color:#fff;margin:0 -20px 26px;padding:34px 20px 30px;
+  }
+  header .inner{max-width:960px;margin:0 auto;}
+  .eyebrow{font-size:12px;letter-spacing:.28em;color:var(--brass-soft);
+    text-transform:uppercase;margin-bottom:10px;font-weight:600;}
+  h1{margin:0;font-size:27px;font-weight:700;letter-spacing:.01em;}
+  .subtitle{margin:8px 0 0;color:#c7cfdd;font-size:14px;max-width:640px;}
+
+  /* ---------- spread badge ---------- */
+  .spread-badge{
+    margin-top:22px;display:flex;flex-wrap:wrap;gap:0;
+    border:1px solid rgba(216,194,148,.35);border-radius:12px;overflow:hidden;
+    background:rgba(255,255,255,.04);
+  }
+  .spread-cell{flex:1 1 150px;padding:14px 18px;border-right:1px solid rgba(216,194,148,.18);}
+  .spread-cell:last-child{border-right:none;}
+  .spread-cell .lab{font-size:11.5px;color:#aeb8c8;letter-spacing:.05em;}
+  .spread-cell .val{font-size:22px;font-weight:700;margin-top:3px;
+    font-variant-numeric:tabular-nums;}
+  .spread-cell .val small{font-size:13px;font-weight:500;color:#c7cfdd;margin-left:2px;}
+  .spread-cell.hl .val{color:var(--brass-soft);}
+
+  /* ---------- cards ---------- */
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:22px 22px 24px;box-shadow:0 1px 2px rgba(22,35,58,.04);}
+  .card h2{margin:0 0 4px;font-size:16px;font-weight:700;
+    display:flex;align-items:center;gap:9px;}
+  .card h2 .dot{width:9px;height:9px;border-radius:50%;background:var(--brass);flex:none;}
+  .card .hint{font-size:12px;color:var(--muted);margin:0 0 16px;}
+
+  /* ---------- fields ---------- */
+  .field{margin-bottom:15px;}
+  .field:last-child{margin-bottom:0;}
+  .field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--ink-2);}
+  .field .note{font-weight:400;color:var(--muted);font-size:12px;margin-left:4px;}
+  .input-row{display:flex;align-items:stretch;border:1px solid var(--line);
+    border-radius:9px;overflow:hidden;background:#fcfbf8;transition:border-color .15s;}
+  .input-row:focus-within{border-color:var(--brass);box-shadow:0 0 0 3px rgba(176,137,74,.12);}
+  .input-row input,.input-row select{
+    border:none;background:transparent;padding:11px 12px;font-size:16px;width:100%;
+    font-family:inherit;color:var(--ink);font-variant-numeric:tabular-nums;outline:none;-webkit-appearance:none;appearance:none;}
+  .input-row input:disabled{color:var(--muted);background:var(--ink-05);}
+  .input-row .unit{display:flex;align-items:center;padding:0 14px;background:#f1ede3;
+    color:var(--muted);font-size:13px;font-weight:600;border-left:1px solid var(--line);white-space:nowrap;}
+  select{cursor:pointer;}
+  .sync-line{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);
+    margin:8px 0 0;cursor:pointer;user-select:none;}
+  .sync-line input{width:15px;height:15px;accent-color:var(--brass);}
+
+  .mode-toggle{display:flex;gap:8px;}
+  .mode-toggle label{flex:1;border:1px solid var(--line);border-radius:9px;padding:10px 8px;
+    text-align:center;cursor:pointer;font-size:13px;font-weight:600;background:#fcfbf8;
+    transition:.15s;position:relative;}
+  .mode-toggle label .sub{display:block;font-size:11px;font-weight:400;color:var(--muted);margin-top:2px;}
+  .mode-toggle input{position:absolute;opacity:0;}
+  .mode-toggle label.on{border-color:var(--brass);background:#fff;
+    box-shadow:0 0 0 2px rgba(176,137,74,.15) inset;color:var(--ink);}
+
+  /* ---------- section head ---------- */
+  .sec-head{margin:34px 0 16px;display:flex;align-items:baseline;gap:12px;}
+  .sec-head h2{margin:0;font-size:15px;font-weight:700;letter-spacing:.02em;
+    text-transform:uppercase;color:var(--ink);}
+  .sec-head .rule{flex:1;height:1px;background:var(--line);}
+
+  /* ---------- metric cards ---------- */
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  .metric{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 16px 17px;}
+  .metric .lab{font-size:12px;color:var(--muted);margin-bottom:7px;line-height:1.35;min-height:32px;}
+  .metric .num{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
+  .metric .num small{font-size:13px;font-weight:500;color:var(--muted);margin-left:3px;}
+  .metric.feature{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .metric.feature .lab{color:#aeb8c8;}
+  .metric.feature .num small{color:#c7cfdd;}
+  .pos{color:var(--pos);} .neg{color:var(--neg);}
+
+  /* ---------- chart ---------- */
+  .chart-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 20px 12px;}
+  .chart-card .chart-title{font-size:14px;font-weight:700;margin:0 0 2px;}
+  .chart-card .chart-sub{font-size:12px;color:var(--muted);margin:0 0 8px;}
+  svg{display:block;width:100%;height:auto;}
+
+  /* ---------- table ---------- */
+  .table-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card);}
+  table{border-collapse:collapse;width:100%;font-size:13px;min-width:640px;}
+  thead th{background:var(--ink);color:#fff;font-weight:600;padding:11px 12px;text-align:right;
+    white-space:nowrap;font-size:12.5px;}
+  thead th:first-child{text-align:center;}
+  tbody td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--line);
+    font-variant-numeric:tabular-nums;white-space:nowrap;}
+  tbody td:first-child{text-align:center;font-weight:600;color:var(--ink-2);}
+  tbody tr:nth-child(even){background:#faf8f3;}
+  tbody tr.phase-end td{border-bottom:2px solid var(--brass-soft);}
+  tfoot td{padding:11px 12px;text-align:right;font-weight:700;background:#f1ede3;
+    border-top:2px solid var(--ink);font-variant-numeric:tabular-nums;}
+  tfoot td:first-child{text-align:center;}
+
+  /* ---------- disclaimer / actions ---------- */
+  .disclaimer{margin-top:24px;font-size:12px;color:var(--muted);line-height:1.7;
+    border-left:3px solid var(--brass-soft);padding:4px 0 4px 14px;}
+  .disclaimer b{color:var(--ink-2);}
+  .actions{margin:26px 0 0;display:flex;gap:12px;flex-wrap:wrap;}
+  .btn{border:1px solid var(--ink);background:var(--ink);color:#fff;border-radius:9px;
+    padding:11px 22px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .btn.ghost{background:transparent;color:var(--ink);}
+  .btn:hover{opacity:.9;}
+  .foot-note{margin-top:30px;font-size:11px;color:var(--muted);text-align:center;letter-spacing:.03em;}
+
+  /* ---------- responsive ---------- */
+  @media (max-width:760px){
+    .grid-2{grid-template-columns:1fr;}
+    .metrics{grid-template-columns:1fr 1fr;}
+    h1{font-size:22px;}
+    .metric .num{font-size:21px;}
+  }
+  @media (max-width:420px){
+    .metrics{grid-template-columns:1fr;}
+  }
+
+  /* ---------- print A4 ---------- */
+  @media print{
+    @page{size:A4;margin:12mm;}
+    body{background:#fff;font-size:11px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .wrap{max-width:none;padding:0;}
+    header{margin:0 0 14px;border-radius:10px;padding:20px;}
+    .actions,.foot-note,.sync-line{display:none!important;}
+    .card,.metric,.chart-card,.table-scroll{box-shadow:none;break-inside:avoid;}
+    .input-row{border-color:#ccc;}
+    .metrics{grid-template-columns:repeat(4,1fr);}
+    .grid-2{grid-template-columns:1fr 1fr;}
+    table{min-width:0;}
+    .sec-head{margin-top:18px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="inner">
+    <div class="eyebrow">Leverage · Cash-Flow Analysis</div>
+    <h1>房貸投資套利現金流試算</h1>
+    <p class="subtitle">以房貸資金投入收益型商品，比較「房貸支出」與「投資收益」的每期淨現金流，量化利差套利結果。</p>
+    <div class="spread-badge">
+      <div class="spread-cell"><div class="lab">房貸年利率</div><div class="val" id="b-mort">–</div></div>
+      <div class="spread-cell"><div class="lab">投資年報酬率</div><div class="val" id="b-inv">–</div></div>
+      <div class="spread-cell hl"><div class="lab">利差 Spread</div><div class="val" id="b-spread">–</div></div>
+      <div class="spread-cell"><div class="lab">槓桿本金</div><div class="val" id="b-lev">–</div></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- INPUTS -->
+  <div class="grid-2">
+    <div class="card">
+      <h2><span class="dot"></span>房貸條件</h2>
+      <p class="hint">寬限期內僅繳利息，期滿後本息平均攤還。</p>
+
+      <div class="field">
+        <label>貸款金額</label>
+        <div class="input-row">
+          <input type="number" id="loanAmt" value="1000" min="0" step="10" inputmode="decimal">
+          <span class="unit">萬元</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>貸款年限</label>
+        <div class="input-row">
+          <input type="number" id="loanYears" value="20" min="1" max="40" step="1" inputmode="numeric">
+          <span class="unit">年</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>還款寬限期 <span class="note">最長 3 年，無寬限期選 0</span></label>
+        <div class="input-row">
+          <select id="graceYears">
+            <option value="0" selected>0 年</option>
+            <option value="1">1 年</option>
+            <option value="2">2 年</option>
+            <option value="3">3 年</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>房貸年利率</label>
+        <div class="input-row">
+          <input type="number" id="mortRate" value="2.58" min="0" step="0.01" inputmode="decimal">
+          <span class="unit">%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>投資商品</h2>
+      <p class="hint">以房貸資金投入的收益型部位（如儲蓄險、債券、配息基金等）。</p>
+
+      <div class="field">
+        <label>投資金額</label>
+        <div class="input-row">
+          <input type="number" id="invAmt" value="1000" min="0" step="10" inputmode="decimal">
+          <span class="unit">萬元</span>
+        </div>
+        <label class="sync-line"><input type="checkbox" id="syncAmt" checked>投資金額同貸款金額（全額槓桿）</label>
+      </div>
+
+      <div class="field">
+        <label>投資年報酬率 <span class="note">配息率或預期年化報酬</span></label>
+        <div class="input-row">
+          <input type="number" id="invRate" value="6" min="0" step="0.1" inputmode="decimal">
+          <span class="unit">%</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>收益模式</label>
+        <div class="mode-toggle" id="modeToggle">
+          <label class="on" id="lbl-payout">
+            <input type="radio" name="invMode" value="payout" checked>
+            配息領回
+            <span class="sub">每期領現金 · 本金保留</span>
+          </label>
+          <label id="lbl-accum">
+            <input type="radio" name="invMode" value="accum">
+            複利累積
+            <span class="sub">不配息 · 期末實現</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- METRICS -->
+  <div class="sec-head"><h2 id="metrics-head">套利現金流結果</h2><div class="rule"></div></div>
+  <div class="metrics" id="metrics"></div>
+
+  <!-- CHART -->
+  <div class="sec-head"><h2>現金流走勢</h2><div class="rule"></div></div>
+  <div class="chart-card">
+    <p class="chart-title" id="chart-title">累積淨現金流</p>
+    <p class="chart-sub" id="chart-sub"></p>
+    <div id="chart"></div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="sec-head"><h2>年度明細</h2><div class="rule"></div></div>
+  <div class="table-scroll">
+    <table>
+      <thead id="thead"></thead>
+      <tbody id="tbody"></tbody>
+      <tfoot id="tfoot"></tfoot>
+    </table>
+  </div>
+
+  <div class="disclaimer" id="disclaimer"></div>
+
+  <div class="actions">
+    <button class="btn" onclick="window.print()">列印 / 存成 PDF</button>
+    <button class="btn ghost" onclick="resetAll()">還原預設值</button>
+  </div>
+
+  <p class="foot-note">本工具為單一自足檔案，無外部連線，僅供內部試算與客戶溝通輔助使用。</p>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const numv = id => { const v = parseFloat($(id).value); return isFinite(v) ? v : 0; };
+const intv = id => { const v = parseInt($(id).value,10); return isFinite(v) ? v : 0; };
+
+function fmtWan(x){
+  const n = Math.round(x*100)/100;
+  return n.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:1});
+}
+function fmtNT(xWan){ // 萬元 -> 元
+  return Math.round(xWan*10000).toLocaleString('en-US');
+}
+function signClass(x){ return x >= 0 ? 'pos' : 'neg'; }
+
+/* ---------- core calculation ---------- */
+function compute(){
+  const L  = numv('loanAmt');            // 萬元
+  const Y  = Math.max(1, intv('loanYears'));
+  const G  = Math.min(intv('graceYears'), Y);
+  const rm = numv('mortRate')/100;
+  const V  = numv('invAmt');             // 萬元
+  const ri = numv('invRate')/100;
+  const mode = document.querySelector('input[name="invMode"]:checked').value;
+
+  const i = rm/12;
+  const totalM = Y*12;
+  const graceM = G*12;
+  const amortM = totalM - graceM;
+
+  // post-grace level payment on principal L
+  let M;
+  if (amortM <= 0) M = 0;                 // balloon (grace == term)
+  else if (i === 0) M = L/amortM;
+  else M = L * i * Math.pow(1+i,amortM) / (Math.pow(1+i,amortM)-1);
+
+  // monthly investment income (payout model)
+  const invMonthly = V*ri/12;
+
+  // simulate monthly, aggregate by year
+  let bal = L, totalInterest = 0, cumCF = 0;
+  const rows = [];
+  let acc = {interest:0, principal:0, payment:0};
+
+  for (let m=1; m<=totalM; m++){
+    const interest = bal*i;
+    let principal = 0, pay;
+    if (m <= graceM){ pay = interest; }
+    else {
+      pay = M; principal = pay - interest;
+      if (principal > bal){ principal = bal; pay = principal + interest; }
+      bal -= principal;
+    }
+    if (amortM <= 0 && m === totalM){ principal = bal; pay = interest + principal; bal = 0; }
+
+    acc.interest += interest; acc.principal += principal; acc.payment += pay;
+    totalInterest += interest;
+
+    if (m % 12 === 0){
+      const yIdx = m/12;
+      // investment side
+      const invValue = V * Math.pow(1+i0(ri), m); // monthly compound accum value
+      const payoutIncome = V*ri;                    // constant annual payout
+      let net;
+      if (mode === 'payout'){ net = payoutIncome - acc.payment; }
+      else { net = -acc.payment; }                  // accum: only pay out, no cash income
+      cumCF += net;
+      rows.push({
+        year:yIdx,
+        interest:acc.interest, principal:acc.principal, payment:acc.payment,
+        balance:bal,
+        income: mode==='payout' ? payoutIncome : 0,
+        invValue: invValue,
+        net: net, cum: cumCF,
+        networth: invValue - bal,
+        phaseEnd: (yIdx === G && G>0)
+      });
+      acc = {interest:0, principal:0, payment:0};
+    }
+  }
+
+  // helper: monthly compound rate factor
+  function i0(r){ return r/12; }
+
+  const finalInvValue = V * Math.pow(1+ri/12, totalM);
+  const totalPayout   = V*ri*Y;
+
+  return {
+    L,V,Y,G,rm,ri,mode,i,M,graceM,amortM,invMonthly,
+    totalInterest, rows,
+    monthlyGrace: invMonthly - L*i,          // net monthly during grace (payout)
+    monthlyAfter: invMonthly - M,            // net monthly after grace (payout)
+    totalPayout, finalInvValue,
+    netArbPayout: totalPayout - totalInterest,
+    netArbAccum: (finalInvValue - V) - totalInterest,
+    ownCapital: Math.max(V - L, 0),
+    cumFinal: rows.length ? rows[rows.length-1].cum : 0
+  };
+}
+
+/* ---------- render ---------- */
+function render(){
+  const d = compute();
+
+  // spread badge
+  $('b-mort').innerHTML   = (d.rm*100).toFixed(2)+'<small>%</small>';
+  $('b-inv').innerHTML    = (d.ri*100).toFixed(2)+'<small>%</small>';
+  const sp = (d.ri-d.rm)*100;
+  $('b-spread').innerHTML = (sp>=0?'+':'')+sp.toFixed(2)+'<small>%</small>';
+  $('b-lev').innerHTML    = fmtWan(d.V)+'<small>萬</small>';
+
+  renderMetrics(d);
+  renderChart(d);
+  renderTable(d);
+  renderDisclaimer(d);
+}
+
+function renderMetrics(d){
+  const box = $('metrics');
+  let cards = [];
+
+  if (d.mode === 'payout'){
+    $('metrics-head').textContent = '套利現金流結果（配息領回）';
+    const netMonthly = d.G>0 ? d.monthlyGrace : d.monthlyAfter;
+    cards = [
+      {lab:'投資每月收益', num:fmtNT(d.invMonthly), unit:'元', cls:'pos'},
+      d.G>0
+        ? {lab:'淨月現金流<br>（寬限期內·僅繳息）', num:(d.monthlyGrace>=0?'+':'')+fmtNT(d.monthlyGrace), unit:'元', cls:signClass(d.monthlyGrace)}
+        : {lab:'房貸每月付款<br>（本息攤還）', num:fmtNT(d.M), unit:'元', cls:''},
+      {lab:'淨月現金流<br>（本息攤還期·寬限期後）', num:(d.monthlyAfter>=0?'+':'')+fmtNT(d.monthlyAfter), unit:'元', cls:signClass(d.monthlyAfter)},
+      {lab:'期末淨套利<br>（總配息 − 總利息）', num:(d.netArbPayout>=0?'+':'')+fmtWan(d.netArbPayout), unit:'萬', cls:signClass(d.netArbPayout), feature:true},
+    ];
+  } else {
+    $('metrics-head').textContent = '套利現金流結果（複利累積）';
+    cards = [
+      {lab:'房貸每月付款<br>'+(d.G>0?'（寬限期後·本息）':'（本息攤還）'), num:fmtNT(d.M), unit:'元', cls:''},
+      {lab:'期末投資帳戶價值', num:fmtWan(d.finalInvValue), unit:'萬', cls:'pos'},
+      {lab:'投資淨增值', num:'+'+fmtWan(d.finalInvValue-d.V), unit:'萬', cls:'pos'},
+      {lab:'期末淨套利<br>（淨增值 − 總利息）', num:(d.netArbAccum>=0?'+':'')+fmtWan(d.netArbAccum), unit:'萬', cls:signClass(d.netArbAccum), feature:true},
+    ];
+  }
+
+  box.innerHTML = cards.map(c =>
+    `<div class="metric${c.feature?' feature':''}">
+       <div class="lab">${c.lab}</div>
+       <div class="num ${c.cls||''}">${c.num}<small>${c.unit}</small></div>
+     </div>`).join('');
+}
+
+/* ---------- SVG chart (no libraries) ---------- */
+function renderChart(d){
+  const payout = d.mode === 'payout';
+  $('chart-title').textContent = payout ? '累積淨現金流' : '期末淨資產（投資價值 − 房貸餘額）';
+  $('chart-sub').textContent = payout
+    ? '每年「投資配息 − 房貸支出」累加；上方（綠）為正、下方（紅）為負。'
+    : '投資以複利累積、房貸逐年攤還，兩者差額即淨資產累積。';
+
+  const pts = d.rows.map(r => ({x:r.year, y: payout ? r.cum : r.networth}));
+  if (!pts.length){ $('chart').innerHTML=''; return; }
+
+  const W=880,H=300,PL=64,PR=20,PT=18,PB=34;
+  const iw=W-PL-PR, ih=H-PT-PB;
+  const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
+  let ymin=Math.min(0,...ys), ymax=Math.max(0,...ys);
+  if (ymin===ymax){ymax+=1;ymin-=1;}
+  const pad=(ymax-ymin)*0.08; ymax+=pad; ymin-=pad;
+  const xmin=0, xmax=Math.max(...xs);
+
+  const X=v=>PL+(v-xmin)/(xmax-xmin||1)*iw;
+  const Y=v=>PT+(ymax-v)/(ymax-ymin)*ih;
+
+  // gridlines (5)
+  let grid='', ylab='';
+  for(let k=0;k<=4;k++){
+    const val=ymin+(ymax-ymin)*k/4, yy=Y(val);
+    grid+=`<line x1="${PL}" y1="${yy.toFixed(1)}" x2="${W-PR}" y2="${yy.toFixed(1)}" stroke="#eee7d8" stroke-width="1"/>`;
+    ylab+=`<text x="${PL-8}" y="${(yy+4).toFixed(1)}" text-anchor="end" font-size="11" fill="#8a90a0" font-family="sans-serif">${fmtWan(val)}</text>`;
+  }
+  // zero baseline
+  const y0=Y(0);
+  const zero=`<line x1="${PL}" y1="${y0.toFixed(1)}" x2="${W-PR}" y2="${y0.toFixed(1)}" stroke="#b0894a" stroke-width="1.4" stroke-dasharray="4 3"/>`;
+
+  // x labels (every ~5y + last)
+  let xlab='';
+  const step = xmax<=10?2:(xmax<=20?5:10);
+  for(let yr=0;yr<=xmax;yr+=step){
+    xlab+=`<text x="${X(yr).toFixed(1)}" y="${H-12}" text-anchor="middle" font-size="11" fill="#8a90a0" font-family="sans-serif">${yr}</text>`;
+  }
+  xlab+=`<text x="${X(xmax).toFixed(1)}" y="${H-12}" text-anchor="middle" font-size="11" fill="#8a90a0" font-family="sans-serif">${xmax}</text>`;
+  xlab+=`<text x="${(W-PR).toFixed(1)}" y="${H-12}" text-anchor="end" font-size="10.5" fill="#b0894a" font-family="sans-serif">年</text>`;
+
+  // build line + area, include origin (0,0)
+  const full=[{x:0,y:0},...pts];
+  const line=full.map((p,idx)=>`${idx?'L':'M'}${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`).join(' ');
+  const area=`M${X(0).toFixed(1)},${y0.toFixed(1)} `+
+    full.map(p=>`L${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`).join(' ')+
+    ` L${X(xmax).toFixed(1)},${y0.toFixed(1)} Z`;
+
+  const endPos = full[full.length-1].y >= 0;
+  const stroke = endPos ? '#2f7a5b' : '#b0472e';
+  const fill   = endPos ? 'rgba(47,122,91,.14)' : 'rgba(176,71,46,.13)';
+
+  // end marker + label
+  const ex=X(full[full.length-1].x), ey=Y(full[full.length-1].y);
+  const endVal=full[full.length-1].y;
+  const marker=`<circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="4" fill="${stroke}"/>
+    <text x="${(ex-6).toFixed(1)}" y="${(ey - (endPos?8:-16)).toFixed(1)}" text-anchor="end" font-size="12.5" font-weight="700" fill="${stroke}" font-family="sans-serif">${(endVal>=0?'+':'')}${fmtWan(endVal)} 萬</text>`;
+
+  $('chart').innerHTML =
+    `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="現金流走勢圖">
+       ${grid}${ylab}
+       <path d="${area}" fill="${fill}" stroke="none"/>
+       ${zero}
+       <path d="${line}" fill="none" stroke="${stroke}" stroke-width="2.4" stroke-linejoin="round"/>
+       ${marker}${xlab}
+       <text x="${PL-8}" y="${PT-4}" text-anchor="end" font-size="10.5" fill="#b0894a" font-family="sans-serif">萬元</text>
+     </svg>`;
+}
+
+/* ---------- table ---------- */
+function renderTable(d){
+  const payout = d.mode === 'payout';
+  const head = payout
+    ? ['年','房貸利息','房貸本金','房貸支出','投資配息','淨現金流','累積淨現金流','房貸餘額']
+    : ['年','房貸利息','房貸本金','房貸支出','投資帳戶價值','淨現金流','房貸餘額','淨資產'];
+  $('thead').innerHTML = '<tr>'+head.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+
+  $('tbody').innerHTML = d.rows.map(r=>{
+    const cells = payout
+      ? [r.year, fmtWan(r.interest), fmtWan(r.principal), fmtWan(r.payment),
+         fmtWan(r.income),
+         `<span class="${signClass(r.net)}">${(r.net>=0?'+':'')}${fmtWan(r.net)}</span>`,
+         `<span class="${signClass(r.cum)}">${(r.cum>=0?'+':'')}${fmtWan(r.cum)}</span>`,
+         fmtWan(r.balance)]
+      : [r.year, fmtWan(r.interest), fmtWan(r.principal), fmtWan(r.payment),
+         fmtWan(r.invValue),
+         `<span class="${signClass(r.net)}">${(r.net>=0?'+':'')}${fmtWan(r.net)}</span>`,
+         fmtWan(r.balance),
+         `<span class="${signClass(r.networth)}">${(r.networth>=0?'+':'')}${fmtWan(r.networth)}</span>`];
+    return `<tr class="${r.phaseEnd?'phase-end':''}">`+cells.map(c=>`<td>${c}</td>`).join('')+'</tr>';
+  }).join('');
+
+  const totInterest=d.rows.reduce((s,r)=>s+r.interest,0);
+  const totPrincipal=d.rows.reduce((s,r)=>s+r.principal,0);
+  const totPayment=d.rows.reduce((s,r)=>s+r.payment,0);
+  const totIncome=d.rows.reduce((s,r)=>s+r.income,0);
+  const foot = payout
+    ? ['合計', fmtWan(totInterest), fmtWan(totPrincipal), fmtWan(totPayment),
+       fmtWan(totIncome),
+       '', `<span class="${signClass(d.cumFinal)}">${(d.cumFinal>=0?'+':'')}${fmtWan(d.cumFinal)}</span>`, '—']
+    : ['合計', fmtWan(totInterest), fmtWan(totPrincipal), fmtWan(totPayment),
+       fmtWan(d.finalInvValue), '', '—',
+       `<span class="${signClass(d.finalInvValue-0)}">+${fmtWan(d.rows.length?d.rows[d.rows.length-1].networth:0)}</span>`];
+  $('tfoot').innerHTML = '<tr>'+foot.map(c=>`<td>${c}</td>`).join('')+'</tr>';
+}
+
+/* ---------- disclaimer ---------- */
+function renderDisclaimer(d){
+  const be = (d.V>0) ? (d.rm*d.L/d.V*100) : 0;
+  const spread=(d.ri-d.rm)*100;
+  let line1;
+  if (d.mode==='payout'){
+    line1 = `本情境利差 <b>${(spread>=0?'+':'')+spread.toFixed(2)}%</b>；投資報酬率須 ≥ <b>${be.toFixed(2)}%</b> 才能在寬限期內達到淨現金流打平。`;
+  } else {
+    line1 = `本情境利差 <b>${(spread>=0?'+':'')+spread.toFixed(2)}%</b>；複利累積模式下，期間現金流為負（需自行墊繳本息），套利於期末一次實現。`;
+  }
+  $('disclaimer').innerHTML =
+    `${line1}<br>
+     <b>假設與限制：</b>假設投資本金全額保本、報酬率／配息穩定、利率固定不變，且未計入投資波動與資本損失、稅負、匯率、提前清償違約金、費用及借款成數限制等因素。實際結果將隨市場與商品條款而異。<br>
+     <b>本試算僅供內部參考與客戶溝通輔助，非投資建議或收益保證。</b>`;
+}
+
+/* ---------- sync + events ---------- */
+function syncInvAmt(){
+  if ($('syncAmt').checked){
+    $('invAmt').value = $('loanAmt').value;
+    $('invAmt').disabled = true;
+  } else {
+    $('invAmt').disabled = false;
+  }
+}
+
+function updateModeUI(){
+  const v=document.querySelector('input[name="invMode"]:checked').value;
+  $('lbl-payout').classList.toggle('on', v==='payout');
+  $('lbl-accum').classList.toggle('on', v==='accum');
+}
+
+function resetAll(){
+  $('loanAmt').value=1000; $('loanYears').value=20; $('graceYears').value='0';
+  $('mortRate').value=2.58; $('invAmt').value=1000; $('invRate').value=6;
+  $('syncAmt').checked=true;
+  document.querySelector('input[name="invMode"][value="payout"]').checked=true;
+  syncInvAmt(); updateModeUI(); render();
+}
+
+['loanAmt','loanYears','graceYears','mortRate','invAmt','invRate'].forEach(id=>{
+  $(id).addEventListener('input', ()=>{ if(id==='loanAmt') syncInvAmt(); render(); });
+  $(id).addEventListener('change', ()=>{ if(id==='loanAmt') syncInvAmt(); render(); });
+});
+$('syncAmt').addEventListener('change', ()=>{ syncInvAmt(); render(); });
+document.querySelectorAll('input[name="invMode"]').forEach(el=>
+  el.addEventListener('change', ()=>{ updateModeUI(); render(); }));
+
+/* init */
+syncInvAmt(); updateModeUI(); render();
+</script>
+</body>
+</html>
