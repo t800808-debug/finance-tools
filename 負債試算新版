@@ -88,6 +88,13 @@
   .insight{margin-top:14px;background:#fbf9f4;border-left:3px solid var(--brass);padding:11px 14px;font-size:13px;color:#4a4335;border-radius:0 8px 8px 0}
   .insight b{color:var(--clay)}
 
+  /* structure diagram (01) */
+  .diag{width:100%;height:auto;display:block;max-width:920px;margin:0 auto}
+  .diag .dg-lbl{font-size:20px;fill:#c4cdda;font-weight:600}
+  .diag .dg-val{font-size:34px;font-weight:800;fill:#fff}
+  .diag .dg-sub{font-size:15px;fill:#9aa4b2}
+  .diag .dg-line{stroke:#98a1ae;stroke-width:2;fill:none}
+
   /* waterfall */
   .wf-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:4px 0}
   .wf{display:flex;align-items:stretch;gap:4px;height:250px;min-width:430px}
@@ -128,11 +135,21 @@
   tr.eff td{font-weight:800;color:var(--ink)}
   tr.eff td.p1{color:var(--brass-d)} tr.eff td.p2{color:var(--clay)}
 
+  /* stacking (07) mini-inputs on light card */
+  .stk-in{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;background:var(--panel);border-radius:10px;padding:14px}
+  .stk-in .m label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
+  .stk-in .m .box{display:flex;align-items:center;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .stk-in .m input{width:100%;border:0;background:transparent;font:inherit;font-size:16px;font-weight:700;padding:8px 9px;text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
+  .stk-in .m input:focus{outline:none}
+  .stk-in .m .u{padding:0 9px;color:var(--muted);font-size:12px;border-left:1px solid var(--line);white-space:nowrap}
+  .stk-warn{margin-top:12px;background:#fbecea;border-left:3px solid var(--clay);padding:10px 13px;font-size:12.5px;color:#7a2f22;border-radius:0 8px 8px 0}
+
   .foot{margin-top:26px;font-size:12px;color:var(--muted);line-height:1.7;border-top:1px solid var(--line);padding-top:16px}
   .foot b{color:var(--ink2)}
 
   @media screen and (max-width:820px){
     .controls,.g4,.g3,.g2,.cf,.scn{grid-template-columns:1fr}
+    .stk-in{grid-template-columns:1fr 1fr}
     .wf{height:190px}
   }
   @media print{
@@ -196,6 +213,8 @@
     /* pagination: 01+02 / 03+04 / 05+06 → three clean pages */
     #pg2{ break-before:page; page-break-before:always }
     #pg3{ break-before:page; page-break-before:always }
+    #pg4{ break-before:page; page-break-before:always }
+    .stk-in{display:none}
   }
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -261,16 +280,53 @@
   <!-- 1 -->
   <div class="rpt-title"><span class="no">01</span><h3 id="t1">初始資金的結構化配置</h3></div>
   <div class="card">
-    <div class="grid g4">
-      <div class="stat"><div class="k">初始資金</div><div class="v" id="s_init"></div><div class="note">投資本金＋首期保費</div></div>
-      <div class="stat dark"><div class="k">總投資部位</div><div class="v" id="s_pos"></div><div class="note">投資本金＋銀行融資</div></div>
-      <div class="stat gold"><div class="k">身故理賠金</div><div class="v" id="s_db"></div><div class="note" id="s_db_n"></div></div>
-      <div class="stat"><div class="k">抵押率 (LTV)</div><div class="v" id="s_ltv"></div><div class="note">融資 ÷ 投資本金</div></div>
-    </div>
-    <div class="grid g3" style="margin-top:14px">
-      <div class="stat"><div class="k">每期保費</div><div class="v" id="s_prem"></div><div class="note">× 3 年</div></div>
-      <div class="stat"><div class="k">總保費</div><div class="v" id="s_tprem"></div></div>
-      <div class="stat"><div class="k">槓桿保障倍數</div><div class="v" id="s_lev"></div><div class="note">身故理賠 ÷ 融資額</div></div>
+    <svg class="diag" viewBox="0 0 960 540" preserveAspectRatio="xMidYMid meet" role="img" aria-label="資金結構流程圖">
+      <defs>
+        <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#cbaa6b"/>
+          <stop offset="1" stop-color="#a5823f"/>
+        </linearGradient>
+      </defs>
+
+      <!-- connectors -->
+      <path class="dg-line" d="M180,270 L240,270 M240,97 L240,427 M240,97 L300,97 M240,232 L300,232 M240,427 L300,427"/>
+      <path class="dg-line" d="M510,97 L580,97 M510,232 L580,232 M580,97 L580,232 M580,165 L650,165"/>
+      <!-- gold block arrow 首期保費 → 身故理賠金 -->
+      <path d="M515,412 L610,412 L610,396 L648,430 L610,464 L610,448 L515,448 Z" fill="url(#gold)"/>
+
+      <!-- boxes -->
+      <g>
+        <rect x="10"  y="195" width="170" height="150" rx="6" fill="#1b2431"/>
+        <text class="dg-lbl" x="95"  y="258" text-anchor="middle">初始資金</text>
+        <text class="dg-val" x="95"  y="300" text-anchor="middle" id="d_init">3,700萬</text>
+
+        <rect x="300" y="40"  width="210" height="115" rx="6" fill="#2c303b"/>
+        <text class="dg-lbl" x="405" y="90"  text-anchor="middle">投資本金</text>
+        <text class="dg-val" x="405" y="130" text-anchor="middle" id="d_p">3,000萬</text>
+
+        <rect x="300" y="175" width="210" height="115" rx="6" fill="#586070"/>
+        <text class="dg-lbl" x="405" y="225" text-anchor="middle" fill="#eef1f5">銀行融資</text>
+        <text class="dg-val" x="405" y="265" text-anchor="middle" id="d_l">2,000萬</text>
+
+        <rect x="650" y="70"  width="290" height="190" rx="6" fill="#18202f"/>
+        <text class="dg-lbl" x="795" y="132" text-anchor="middle">總投資部位</text>
+        <text class="dg-val" x="795" y="180" text-anchor="middle" id="d_pos">5,000萬</text>
+        <text class="dg-sub" x="795" y="214" text-anchor="middle">投資本金＋銀行融資</text>
+
+        <rect x="300" y="370" width="210" height="115" rx="6" fill="#101a2b"/>
+        <text class="dg-lbl" x="405" y="420" text-anchor="middle">首期保費</text>
+        <text class="dg-val" x="405" y="460" text-anchor="middle" id="d_prem">700萬</text>
+
+        <rect x="650" y="350" width="290" height="160" rx="6" fill="url(#gold)"/>
+        <text class="dg-lbl" x="795" y="418" text-anchor="middle" fill="#2c2109">身故理賠金</text>
+        <text class="dg-val" x="795" y="464" text-anchor="middle" fill="#20180a" id="d_db">7,980萬</text>
+      </g>
+    </svg>
+
+    <div class="grid g3" style="margin-top:16px">
+      <div class="stat"><div class="k">抵押率 (LTV)</div><div class="v" id="s_ltv"></div><div class="note" id="s_ltv_n"></div></div>
+      <div class="stat"><div class="k">槓桿保障</div><div class="v" id="s_lev"></div><div class="note" id="s_lev_n"></div></div>
+      <div class="stat"><div class="k">保費架構</div><div class="v" id="s_premstruct"></div><div class="note" id="s_tprem_n"></div></div>
     </div>
   </div>
 
@@ -360,7 +416,48 @@
     <div class="insight" style="margin-top:16px">💡 「生前年領金流」採用<b style="color:var(--ink)">第4年後可長期持續的淨現金流</b>（配息−利息）。原始簡報以「初始利差 <span id="c_spread_head"></span>」作為標題數字；本表以陣痛期後實際可持續金額為準，較符合合規揭露原則。</div>
   </div>
 
-  <div class="foot">
+  <!-- 7 -->
+  <div class="rpt-title" id="pg4"><span class="no">07</span><h3>疊保單試算：保單質借再投保的傳承增益</h3></div>
+  <div class="card">
+    <div class="stk-in no-print">
+      <div class="m"><label>質借成數（對總繳保費）</label><div class="box"><input id="Q" type="number" step="1" value="60"><span class="u">%</span></div></div>
+      <div class="m"><label>疊加層數</label><div class="box"><input id="NLAYER" type="number" step="1" value="2"><span class="u">層</span></div></div>
+      <div class="m"><label>疊加層保障倍數（留白＝同主倍數）</label><div class="box"><input id="K2" type="number" step="0.01" value=""><span class="u">倍</span></div></div>
+      <div class="m"><label>質借利率（還息不還本）</label><div class="box"><input id="RP" type="number" step="0.1" value="2"><span class="u">%</span></div></div>
+    </div>
+
+    <table>
+      <thead><tr><th>層級</th><th>質借金額 = 該層總繳保費</th><th>新增保額（免稅）</th><th>累計質借負債</th></tr></thead>
+      <tbody id="stk_rows"></tbody>
+    </table>
+
+    <div class="grid g4" style="margin-top:14px">
+      <div class="stat dark"><div class="k">疊加後總保額（免稅）</div><div class="v" id="stk_db"></div><div class="note" id="stk_db_n"></div></div>
+      <div class="stat"><div class="k">新增質借負債</div><div class="v" id="stk_debt"></div><div class="note">身故時由保險金扣還</div></div>
+      <div class="stat"><div class="k">每年新增利息成本</div><div class="v" id="stk_int"></div><div class="note" id="stk_int_n"></div></div>
+      <div class="stat gold"><div class="k">傳承淨增益</div><div class="v" id="stk_gain"></div><div class="note">保額增額 − 質借本金</div></div>
+    </div>
+
+    <div class="scn" style="margin-top:16px">
+      <div class="box">
+        <h4>情境 A（每年花掉配息）稅後繼承</h4>
+        <div class="big"><span id="stk_a_before" style="color:var(--muted)"></span> ➜ <span class="amt" id="stk_a_after"></span></div>
+        <div class="yrline"><span>疊保單增益</span><span class="hl" id="stk_a_delta" style="color:var(--brass-d)"></span></div>
+      </div>
+      <div class="box b">
+        <h4>情境 B（配息再投資・20年）稅後繼承</h4>
+        <div class="big"><span id="stk_b_before" style="color:var(--muted)"></span> ➜ <span class="amt" id="stk_b_after"></span></div>
+        <div class="yrline"><span>疊保單增益（已扣再投資縮減）</span><span class="hl" id="stk_b_delta" style="color:var(--clay)"></span></div>
+      </div>
+    </div>
+
+    <div class="insight" style="margin-top:14px">💡 生前年領金流因質借利息由 <b id="stk_inc_before" style="color:var(--ink)"></b> 調整為 <b id="stk_inc_after" style="color:var(--ink)"></b>，差額即為此策略的年持有成本。</div>
+    <div class="stk-warn" id="stk_warn" style="display:none"></div>
+
+    <div class="foot" style="margin-top:14px">
+      <b>疊保單假設與提醒</b>　本層試算為說明性示意。①「疊加層」與主約同為<b>分年繳（3 年）</b>，故沿用相同保障倍數屬合理；惟各層須俟前一層保價金足額後方能質借建構，實務上為<b>逐層、跨數年循環</b>建立，完整保額須數年後始到位（層數愈多、到位愈晚，短年期繼承可能尚未建置完成）。②質借利率多為<b>浮動</b>且常高於保費融資利率，升息會壓縮甚至消滅利差。③本試算假設質借本金於身故時由各層保險金全額扣還、利息還息不還本，且質借額度以各層總繳保費計算。④層層舉債放大槓桿的同時亦放大流動性與利率風險，且可能觸發<b>實質課稅（實質重於形式）</b>對「舉債投保／鉅額保單」的核課，務必保留完整風險揭露並以個案稅務與核保條件為準。
+    </div>
+  </div>
     <b>假設與揭露</b>　本試算為說明性示意，非保證收益。固定假設：投資報酬 7%、融資利率 2%（還息不還本）、保費繳費 3 年、第一年保費由初始資金預留支付。情境B 再投資採「年初投入」複利（annuity due）以對齊原始簡報；配息再投資報酬預設 5%，可調整。<br>
     <b>合規提醒</b>　舉債投保／保費融資涉及「投資型商品適合度、融資成數與利率變動、外幣匯率、實質課稅（實質重於形式）與遺產稅認定、境外保單資格與 FSC 核准」等風險，實際製作客戶文件時務必保留完整風險揭露，勿僅呈現正向情境。稅率、免稅額與商品條件應以最新法規與核准條款為準。
   </div>
@@ -429,14 +526,19 @@ function calc(){
   // ================= RENDER =================
   $('t1').textContent = `初始資金 ${n(initCap,0)} 萬的結構化配置`;
 
-  $('s_init').innerHTML  = w(initCap);
-  $('s_pos').innerHTML   = w(pos0);
-  $('s_db').innerHTML    = w(DB);
-  $('s_db_n').textContent= `保額 ${n(DB,0)} 萬`;
-  $('s_ltv').innerHTML   = n(ltv,1)+' <small>%</small>';
-  $('s_prem').innerHTML  = w(prem);
-  $('s_tprem').innerHTML = w(totalPrem);
-  $('s_lev').innerHTML   = n(DB/L,2)+' <small>倍</small>';
+  // structure diagram (01)
+  $('d_init').textContent = n(initCap,0)+'萬';
+  $('d_p').textContent    = n(P,0)+'萬';
+  $('d_l').textContent    = n(L,0)+'萬';
+  $('d_pos').textContent  = n(pos0,0)+'萬';
+  $('d_prem').textContent = n(prem,0)+'萬';
+  $('d_db').textContent   = n(DB,0)+'萬';
+  $('s_ltv').textContent      = n(ltv,1)+'%';
+  $('s_ltv_n').textContent    = ltv<=70 ? '處於安全區間' : '偏高，注意追繳風險';
+  $('s_lev').innerHTML        = n(DB/L,2)+' <small>倍</small>';
+  $('s_lev_n').textContent    = '總保額 '+n(DB,0)+' 萬';
+  $('s_premstruct').innerHTML = n(prem,0)+' <small>萬 × 3年</small>';
+  $('s_tprem_n').textContent  = '總保費 '+n(totalPrem,0)+' 萬';
 
   // params
   $('p_rinv').textContent    = n(R_INV*100)+'%';
@@ -510,6 +612,55 @@ function calc(){
   $('c_e1').textContent   = n(eff1,0)+'%';
   $('c_e2').textContent   = n(eff2,0)+'%';
   $('c_spread_head').textContent = n(spread0,0)+' 萬';
+
+  // ===== 07 疊保單（保單質借再投保） =====
+  const q  = Math.max(0,(+$('Q').value||0)/100);
+  const nL = Math.max(0, Math.floor(+$('NLAYER').value||0));
+  const k2 = $('K2').value.trim()==='' ? K : (+$('K2').value||0);
+  const rp = Math.max(0,(+$('RP').value||0)/100);
+  $('K2').placeholder = n(K,2)+'（同主倍數）';
+
+  let rows='', B=[], DBadd=[], cumDebt=0, prevTP=totalPrem;
+  for(let j=1;j<=nL;j++){
+    const b = q*prevTP, db = k2*b;
+    cumDebt += b; B.push(b); DBadd.push(db);
+    rows += `<tr><td>第 ${j+1} 層</td><td>${w(b)}</td><td class="hl">${w(db)}</td><td>${w(cumDebt)}</td></tr>`;
+    prevTP = b;
+  }
+  if(nL===0) rows = `<tr><td colspan="4" style="text-align:center;color:var(--muted)">將「疊加層數」設為 1 以上即可試算</td></tr>`;
+  $('stk_rows').innerHTML = rows;
+
+  const sumB      = B.reduce((a,c)=>a+c,0);
+  const sumDBadd  = DBadd.reduce((a,c)=>a+c,0);
+  const totalDB   = DB + sumDBadd;
+  const annualInt = sumB * rp;
+  const gain      = sumDBadd - sumB;                 // 情境A 傳承淨增益（利息不影響繼承本金）
+  const inhA_stk  = inhA + gain;
+  const surplus_stk = surplus - annualInt;           // 情境B：利息由年盈餘支應→再投資縮減
+  const acc20_stk   = Math.max(0,surplus_stk) * fvDue(g,20);
+  const inhB20_stk  = (netAssets + acc20_stk)*(1-tax) + totalDB - sumB;
+  const deltaB      = inhB20_stk - inhB20;
+
+  $('stk_db').textContent    = big(totalDB);
+  $('stk_db_n').textContent  = `基礎 ${n(DB,0)} ＋ 疊加 ${n(sumDBadd,0)} 萬`;
+  $('stk_debt').textContent  = big(sumB);
+  $('stk_int').textContent   = w(annualInt);
+  $('stk_int_n').textContent = `${n(sumB,0)}萬 × ${n(rp*100,1)}%`;
+  $('stk_gain').textContent  = big(gain);
+  $('stk_a_before').textContent = big(inhA);
+  $('stk_a_after').textContent  = big(inhA_stk);
+  $('stk_a_delta').textContent  = '＋'+big(gain);
+  $('stk_b_before').textContent = big(inhB20);
+  $('stk_b_after').textContent  = big(inhB20_stk);
+  $('stk_b_delta').textContent  = (deltaB>=0?'＋':'')+big(deltaB);
+  $('stk_inc_before').textContent = n(surplus,1)+' 萬';
+  $('stk_inc_after').textContent  = n(surplus_stk,1)+' 萬';
+
+  let warn='';
+  if(nL>0 && surplus_stk < 0)      warn = `⚠ 質借年利息 ${n(annualInt,0)} 萬 已超過穩定期年淨盈餘 ${n(surplus,1)} 萬 → 穩定期即為<b>負現金流</b>，須以外部資金補足利息，流動性風險高。`;
+  else if(nL>0 && (R_INV-rp) <= 0) warn = `⚠ 質借利率已 ≥ 投資報酬率，疊加層利差為負，槓桿放大的是風險而非報酬。`;
+  $('stk_warn').style.display = warn ? 'block' : 'none';
+  if(warn) $('stk_warn').innerHTML = warn;
 }
 
 // premium placeholder follows L when field is empty
@@ -518,18 +669,20 @@ function syncPremPlaceholder(){
   $('PREM').placeholder = n(L/PREM_YEARS,1)+'（自動）';
 }
 
-['P','L','K','RINV','RLOAN','REINV','PREM'].forEach(id=>{
+['P','L','K','RINV','RLOAN','REINV','PREM','Q','NLAYER','K2','RP'].forEach(id=>{
   $(id).addEventListener('input', ()=>{ syncPremPlaceholder(); calc(); });
 });
 
 function loadDeck(){
   $('P').value=3000; $('L').value=2000; $('K').value=3.99;
   $('RINV').value=7; $('RLOAN').value=2; $('PREM').value=700; $('REINV').value=5;
+  $('Q').value=60; $('NLAYER').value=2; $('K2').value=''; $('RP').value=2;
   syncPremPlaceholder(); calc();
 }
 function resetAll(){
   $('P').value=''; $('L').value=''; $('K').value='';
   $('RINV').value=7; $('RLOAN').value=2; $('PREM').value=''; $('REINV').value=5;
+  $('Q').value=60; $('NLAYER').value=2; $('K2').value=''; $('RP').value=2;
   syncPremPlaceholder(); calc();
 }
 
