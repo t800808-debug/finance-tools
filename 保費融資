@@ -234,7 +234,7 @@
     <p class="eyebrow">亞灣專屬 · 保費融資</p>
     <h1>放大資產效能:保費融資策略試算</h1>
     <p class="sub">調整保費、自備款、10/20 年解約金與匯率,即時重算年化報酬、匯率情境與損益兩平。保單美元計價、借款台幣計息——請留意幣別錯配對報酬的放大效果。</p>
-    <div class="spot">今日即期參考 USD/TWD 約 <b>32.2</b>　·　簡報期初假設 32.30</div>
+    <div class="spot">採用匯率 USD/TWD　<b id="spotBase">32.30</b></div>
   </header>
 
   <!-- INPUTS -->
@@ -495,6 +495,7 @@
     $("d-dp").textContent=nf(dp);
     $("d-loan").textContent=nf(loan);
     $("d-int").textContent=nf(annualInt)+" /年";
+    $("spotBase").textContent=rate2(I.e0);
     syncSlider(I);
     renderLive();
     renderTable(I);
