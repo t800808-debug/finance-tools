@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>保障型保費融資 · 身故給付與實質課稅試算</title>
+<style>
+  :root{
+    --navy:#16233f;
+    --navy-2:#1e3050;
+    --ink:#20293b;
+    --gold:#bd9a44;
+    --gold-soft:#e7d9ad;
+    --green:#1a6a52;
+    --green-soft:#d6e7de;
+    --amber:#c9902c;
+    --amber-soft:#f3e4c4;
+    --rust:#9f4130;
+    --rust-soft:#eed4cc;
+    --peri:#7f86ad;
+    --peri-soft:#dfe1ee;
+    --ivory:#f6f2e9;
+    --paper:#ffffff;
+    --line:#e4ddcd;
+    --muted:#6c7385;
+    --display:"Noto Serif TC","Songti TC","Source Han Serif TC","Georgia",serif;
+    --body:"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+    --num:"SF Mono",ui-monospace,"Roboto Mono","Menlo",monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--body);
+    color:var(--ink);
+    background:var(--ivory);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1040px;margin:0 auto;padding:26px 20px 60px;}
+
+  /* ---- Header ---- */
+  .masthead{
+    background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);
+    color:#f4efe2;border-radius:6px;padding:26px 30px;position:relative;overflow:hidden;
+    box-shadow:0 10px 30px rgba(22,35,63,.18);
+  }
+  .masthead::after{
+    content:"";position:absolute;right:-40px;top:-40px;width:220px;height:220px;
+    border:1px solid rgba(189,154,68,.35);border-radius:50%;
+  }
+  .masthead::before{
+    content:"";position:absolute;right:14px;top:14px;bottom:14px;width:5px;
+    background:var(--gold);border-radius:3px;
+  }
+  .eyebrow{font-size:12px;letter-spacing:.32em;color:var(--gold-soft);margin:0 0 8px;font-weight:600;}
+  .masthead h1{font-family:var(--display);font-weight:700;font-size:27px;margin:0;letter-spacing:.02em;line-height:1.25;}
+  .masthead .sub{margin:9px 0 0;font-size:13.5px;color:#cfd6e6;max-width:660px;}
+  .spots{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;}
+  .spot{
+    display:inline-flex;align-items:baseline;gap:8px;
+    background:rgba(189,154,68,.14);border:1px solid rgba(189,154,68,.4);
+    padding:5px 12px;border-radius:20px;font-size:12.5px;color:var(--gold-soft);
+  }
+  .spot b{font-family:var(--num);color:#fff;font-size:13.5px;}
+
+  /* ---- Section frame ---- */
+  .card{
+    background:var(--paper);border:1px solid var(--line);border-radius:6px;
+    padding:20px 22px;margin-top:18px;box-shadow:0 2px 10px rgba(22,35,63,.04);
+  }
+  .card > h2{
+    font-family:var(--display);font-size:16.5px;margin:0 0 4px;color:var(--navy);
+    display:flex;align-items:center;gap:10px;
+  }
+  .card > h2::before{content:"";width:16px;height:2px;background:var(--gold);display:inline-block;}
+  .card > .hint{font-size:12.5px;color:var(--muted);margin:0 0 16px;}
+  .card.alert{border-left:4px solid var(--rust);}
+  .card.alert > h2::before{background:var(--rust);}
+
+  /* ---- Inputs ---- */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 18px;}
+  .field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px;font-weight:600;}
+  .field .inp{position:relative;}
+  .field input[type=number],.field select{
+    width:100%;font-family:var(--num);font-size:15px;color:var(--ink);
+    padding:9px 40px 9px 11px;border:1px solid var(--line);border-radius:5px;
+    background:#fcfbf7;transition:border-color .15s,box-shadow .15s;
+  }
+  .field select{font-family:var(--body);padding-right:11px;appearance:none;
+    background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+    background-position:calc(100% - 17px) 18px,calc(100% - 12px) 18px;
+    background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
+  .field input[type=number]:focus,.field select:focus{
+    outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(189,154,68,.15);background-color:#fff;
+  }
+  .field .unit{position:absolute;right:11px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);pointer-events:none;}
+  .derived{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px;margin-top:2px;}
+  .chip{background:var(--ivory);border:1px solid var(--line);border-radius:5px;padding:8px 13px;font-size:12.5px;color:var(--muted);}
+  .chip b{font-family:var(--num);color:var(--navy);font-size:14px;margin-left:6px;}
+  .chip.warn{background:var(--rust-soft);border-color:#e0bfb5;color:var(--rust);}
+  .chip.warn b{color:var(--rust);}
+  .toolbar{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .btn{
+    font-family:var(--body);font-size:13px;font-weight:600;cursor:pointer;border-radius:5px;
+    padding:9px 16px;border:1px solid var(--navy);background:var(--navy);color:#fff;transition:opacity .15s,transform .05s;
+  }
+  .btn:hover{opacity:.9;}
+  .btn:active{transform:translateY(1px);}
+  .btn.ghost{background:#fff;color:var(--navy);}
+  .btn.gold{background:var(--gold);border-color:var(--gold);color:#231c07;}
+  .btn:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+
+  /* ---- Feature checklist ---- */
+  .feats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 18px;}
+  .feat{
+    display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border:1px solid var(--line);
+    border-radius:5px;background:#fdfcf9;font-size:13px;cursor:pointer;
+  }
+  .feat input{margin:3px 0 0;accent-color:var(--rust);width:15px;height:15px;flex:none;cursor:pointer;}
+  .feat .fx{display:block;}
+  .feat .fn{font-weight:600;color:var(--ink);}
+  .feat .fd{display:block;font-size:11.5px;color:var(--muted);line-height:1.4;}
+  .feat.locked{background:var(--rust-soft);border-color:#e0bfb5;cursor:default;}
+  .feat.locked .fn{color:var(--rust);}
+  .feat.on{border-color:var(--amber);background:#fdf8ee;}
+  .meter{margin-top:14px;padding:13px 15px;border-radius:5px;background:var(--ivory);border:1px solid var(--line);}
+  .meter .mh{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;flex-wrap:wrap;gap:6px;}
+  .meter .mh b{font-family:var(--display);font-size:16px;}
+  .meter .track{height:7px;border-radius:4px;background:#e8e2d4;margin:9px 0 8px;overflow:hidden;}
+  .meter .fill{height:100%;border-radius:4px;transition:width .3s ease,background .3s ease;}
+  .meter .mn{font-size:11.5px;color:var(--muted);line-height:1.6;}
+
+  /* ---- Scenario slider ---- */
+  .fx-live{display:grid;grid-template-columns:1fr;gap:6px;margin-bottom:20px;}
+  .fx-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;}
+  .fx-read{font-size:13px;color:var(--muted);}
+  .fx-read b{font-family:var(--num);font-size:22px;color:var(--navy);}
+  .fx-move{font-family:var(--num);font-size:13px;font-weight:600;padding:2px 9px;border-radius:14px;}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:4px;
+    background:linear-gradient(90deg,var(--rust) 0%,var(--gold) 50%,var(--green) 100%);margin:14px 0 4px;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;
+    border:3px solid var(--navy);cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.2);
+  }
+  input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid var(--navy);cursor:pointer;}
+  .rail-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:var(--num);}
+
+  /* ---- Payout headline ---- */
+  .payout{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
+  .po{border:1px solid var(--gold);border-radius:6px;padding:15px 17px;background:linear-gradient(180deg,#fffdf7,#fbf5e6);}
+  .po .pk{display:block;font-size:12.5px;color:var(--muted);font-weight:600;}
+  .po .pv{display:block;font-family:var(--num);font-size:30px;font-weight:700;color:var(--navy);line-height:1.2;margin:3px 0 1px;letter-spacing:-.01em;}
+  .po .pw{display:block;font-size:12px;color:var(--gold);font-weight:600;margin-bottom:9px;}
+  .po .pm{display:block;font-size:11.5px;color:var(--muted);line-height:1.7;}
+  .po .pm i{font-style:normal;font-family:var(--num);color:var(--ink);}
+  .po .pm .neg{color:var(--rust);}
+
+  /* ---- Waterfall ---- */
+  .fall{border:1px solid var(--line);border-radius:6px;padding:16px 16px 12px;background:#fdfcf9;margin-bottom:14px;}
+  .fall:last-child{margin-bottom:0;}
+  .fall h3{font-family:var(--display);font-size:14.5px;margin:0 0 2px;color:var(--navy);display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
+  .fall h3 .mult{font-family:var(--num);font-size:20px;font-weight:700;}
+  .fall .yr{font-size:11.5px;color:var(--muted);margin-bottom:16px;}
+  .chart{display:flex;align-items:flex-end;gap:10px;height:190px;padding-top:20px;}
+  .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;}
+  .bar{width:100%;border-radius:3px 3px 0 0;position:relative;transition:height .35s ease;min-height:2px;}
+  .bar .val{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-family:var(--num);font-size:10.5px;color:var(--ink);white-space:nowrap;font-weight:600;}
+  .bar.db{background:var(--gold);}
+  .bar.ded{background:var(--peri);}
+  .bar.tax{background:var(--rust);}
+  .bar.mid{background:var(--navy-2);}
+  .bar.cost{background:repeating-linear-gradient(45deg,#e3dccd,#e3dccd 4px,#f1ece0 4px,#f1ece0 8px);border:1px solid var(--line);}
+  .spacer{width:100%;background:transparent;transition:height .35s ease;}
+  .col .cap{font-size:10.5px;color:var(--muted);margin-top:7px;text-align:center;line-height:1.3;}
+  .fall .summary{display:flex;justify-content:space-between;gap:12px;margin-top:12px;padding-top:11px;border-top:1px dashed var(--line);font-size:12px;}
+  .fall .summary+.summary{border-top:none;padding-top:2px;margin-top:2px;}
+  .fall .summary .k{color:var(--muted);}
+  .fall .summary .v{font-family:var(--num);font-weight:700;font-size:14px;}
+
+  /* ---- Tables ---- */
+  .tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:520px;}
+  thead th{background:var(--navy);color:#f1ecdf;font-weight:600;font-size:12px;padding:9px 10px;text-align:right;}
+  thead th:first-child{text-align:left;border-radius:5px 0 0 0;}
+  thead th:last-child{border-radius:0 5px 0 0;}
+  tbody td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);font-family:var(--num);}
+  tbody td:first-child{text-align:left;font-family:var(--body);color:var(--ink);font-weight:600;}
+  tbody tr.base{background:var(--ivory);}
+  tbody tr.base td:first-child::after{content:" · 基準";color:var(--gold);font-weight:700;font-size:11px;}
+  tbody tr.hi td{background:var(--rust-soft);}
+  .tag{display:inline-block;min-width:66px;padding:3px 8px;border-radius:4px;font-weight:700;}
+  .g{background:var(--green-soft);color:var(--green);}
+  .a{background:var(--amber-soft);color:var(--amber);}
+  .r{background:var(--rust-soft);color:var(--rust);}
+  .legend{display:flex;gap:16px;margin-top:12px;font-size:11.5px;color:var(--muted);flex-wrap:wrap;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .dot{width:11px;height:11px;border-radius:3px;display:inline-block;}
+
+  /* ---- Breakeven ---- */
+  .be-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .be{border:1px solid var(--line);border-radius:6px;padding:16px 18px;background:linear-gradient(180deg,#fff,#fbf8f1);}
+  .be .lab{font-size:12.5px;color:var(--muted);}
+  .be .rate{font-family:var(--num);font-size:26px;font-weight:700;color:var(--rust);margin:4px 0;}
+  .be .note{font-size:12px;color:var(--ink);}
+  .be .note b{color:var(--navy);font-family:var(--num);}
+  .be .alt{font-size:11.5px;color:var(--muted);margin-top:7px;padding-top:7px;border-top:1px dashed var(--line);}
+  .be .alt b{font-family:var(--num);color:var(--ink);}
+
+  /* ---- Risk list ---- */
+  .risks{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;}
+  .risks li{font-size:12.5px;line-height:1.6;padding-left:15px;position:relative;color:var(--ink);}
+  .risks li::before{content:"";position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:50%;background:var(--rust);}
+  .risks li b{color:var(--navy);}
+
+  .foot{font-size:11.5px;color:var(--muted);margin-top:18px;line-height:1.75;}
+  .foot b{color:var(--ink);}
+  .foot p{margin:0 0 9px;}
+
+  @media (max-width:760px){
+    .grid{grid-template-columns:1fr 1fr;}
+    .feats,.risks{grid-template-columns:1fr;}
+    .be-grid,.payout{grid-template-columns:1fr;}
+    .masthead h1{font-size:21px;}
+    .masthead{padding:22px 20px;}
+    .wrap{padding:18px 14px 48px;}
+    .chart{height:150px;gap:5px;}
+    .bar .val{font-size:9px;}
+    .col .cap{font-size:9.5px;}
+  }
+  @media (max-width:460px){ .grid{grid-template-columns:1fr;} }
+  @media (prefers-reduced-motion:reduce){*{transition:none !important;}}
+
+  @media print{
+    body{background:#fff;}
+    .wrap{max-width:none;padding:0;}
+    .toolbar{display:none !important;}
+    .card,.masthead{box-shadow:none;break-inside:avoid;}
+    .masthead{border:1px solid var(--navy);}
+    input[type=range]{display:none;}
+    .tscroll{overflow:visible;}
+    @page{size:A4;margin:12mm;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">亞灣專屬 · 保障型保費融資</p>
+    <h1>身故保險金的真實落袋：舉債投保與實質課稅試算</h1>
+    <p class="sub">保障型保單以美元身故保額放大資產傳承效果，但「舉債投保」是財政部明列的實質課稅參考特徵之一。本工具同時呈現清償貸款後的稅前給付，以及被核課遺產稅後家屬真正拿到的金額。</p>
+    <div class="spots">
+      <span class="spot">採用匯率 USD/TWD <b id="spotBase">32.30</b></span>
+      <span class="spot">實質課稅認定 <b id="spotRatio">100%</b></span>
+      <span class="spot">遺產稅率 <b id="spotTax">20%</b></span>
+    </div>
+  </header>
+
+  <!-- INPUTS -->
+  <section class="card">
+    <h2>試算條件</h2>
+    <p class="hint">保單美元計價、借款台幣計息。遺產稅一律以單一邊際稅率估算，預設 20%（最高級距）為保守假設；若客戶遺產規模明確落在較低級距，可自行下調。</p>
+    <div class="grid">
+      <div class="field">
+        <label>總保費（躉繳）</label>
+        <div class="inp"><input type="number" id="premium" value="2000000" step="10000"><span class="unit">元</span></div>
+      </div>
+      <div class="field">
+        <label>自備款比例</label>
+        <div class="inp"><input type="number" id="dpRate" value="40" step="5" min="0" max="100"><span class="unit">%</span></div>
+      </div>
+      <div class="field">
+        <label>融資年利率</label>
+        <div class="inp"><input type="number" id="loanRate" value="2" step="0.1"><span class="unit">%</span></div>
+      </div>
+      <div class="field">
+        <label>利息繳付方式</label>
+        <div class="inp">
+          <select id="payMode">
+            <option value="annual" selected>逐年自付利息</option>
+            <option value="roll">利息滾入貸款餘額</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>期初 / 目前匯率（USD→TWD）</label>
+        <div class="inp"><input type="number" id="baseRate" value="32.30" step="0.01"><span class="unit">元</span></div>
+      </div>
+      <div class="field">
+        <label>遺產稅邊際稅率 <span style="font-weight:400">(保守採最高級距)</span></label>
+        <div class="inp"><input type="number" id="taxRate" value="20" step="5" min="0" max="20"><span class="unit">%</span></div>
+      </div>
+      <div class="field">
+        <label>第 10 年身故保險金 <span style="font-weight:400">(美元保額)</span></label>
+        <div class="inp"><input type="number" id="db10" value="160000" step="1000"><span class="unit">USD</span></div>
+      </div>
+      <div class="field">
+        <label>第 20 年身故保險金 <span style="font-weight:400">(美元保額)</span></label>
+        <div class="inp"><input type="number" id="db20" value="180000" step="1000"><span class="unit">USD</span></div>
+      </div>
+      <div class="field">
+        <label>實質課稅認定比例</label>
+        <div class="inp"><input type="number" id="taxRatio" value="100" step="10" min="0" max="100"><span class="unit">%</span></div>
+      </div>
+      <div class="field" style="grid-column:1/-1">
+        <label>貸款餘額列為未償債務扣除（遺贈稅法 §17 I ⑨）</label>
+        <div class="inp">
+          <select id="deductLoan">
+            <option value="1" selected>是，全額自遺產總額扣除</option>
+            <option value="0">否，保守假設不獲准扣除</option>
+          </select>
+        </div>
+      </div>
+      <div class="derived">
+        <div class="chip">自備款（自有資金）<b id="d-dp"></b></div>
+        <div class="chip">銀行融資本金<b id="d-loan"></b></div>
+        <div class="chip">每年利息<b id="d-int"></b></div>
+        <div class="chip">10 年保額折台幣<b id="d-tw10"></b></div>
+        <div class="chip">20 年保額折台幣<b id="d-tw20"></b></div>
+        <div class="chip warn">第 10 年身故增額遺產稅<b id="d-marg"></b></div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn ghost" id="btnReset">還原預設值</button>
+      <button class="btn gold" id="btnPrint">列印 / 匯出 PDF</button>
+    </div>
+  </section>
+
+  <!-- SUBSTANCE-OVER-FORM FEATURES -->
+  <section class="card alert">
+    <h2>實質課稅風險特徵檢核</h2>
+    <p class="hint">財政部 109 年 7 月公布「死亡人壽保險金依實質課稅原則核課遺產稅案例及參考特徵」，整理出八項常見態樣。保費融資結構本身即構成「舉債投保」，請就個案再勾選其餘符合項目。</p>
+    <div class="feats" id="feats"></div>
+    <div class="meter">
+      <div class="mh"><span>命中參考特徵</span><b id="meterTxt"></b></div>
+      <div class="track"><div class="fill" id="meterFill"></div></div>
+      <p class="mn">參考特徵數量並非官方評分標準，稽徵機關係就個案資金流向、投保動機與經濟實質綜合認定；單一特徵即可能被核課，全數未命中亦不等於免稅。命中項目越多，建議越早取得稅務意見並預留稅源。</p>
+    </div>
+  </section>
+
+  <!-- LIVE SCENARIO -->
+  <section class="card">
+    <h2>身故給付拆解 · 匯率情境</h2>
+    <p class="hint">拖曳匯率軸，觀察身故保險金重估後，清償貸款與繳納遺產稅之後家屬實際入袋的金額。台幣升值時美元保額換回台幣縮水，台幣負債卻不動。</p>
+
+    <div class="fx-live">
+      <div class="fx-head">
+        <div class="fx-read">假設身故時匯率 <b id="fxVal">32.30</b> <span id="fxRel"></span></div>
+        <div class="fx-move" id="fxMove"></div>
+      </div>
+      <input type="range" id="fxSlider" min="23" max="40" step="0.01" value="32.30" aria-label="身故時匯率">
+      <div class="rail-labels"><span>23.00</span><span>32.30</span><span>40.00</span></div>
+    </div>
+
+    <div class="payout" id="payout"></div>
+
+    <div id="fall10" class="fall"></div>
+    <div id="fall20" class="fall"></div>
+  </section>
+
+  <!-- TAX IMPACT -->
+  <section class="card">
+    <h2>實質課稅影響對照</h2>
+    <p class="hint">同一張保單，在「未被核課」與「依實質課稅核課」兩種結果下，家屬實拿金額的差距。以目前匯率軸位置計算。</p>
+    <div class="tscroll">
+      <table>
+        <thead>
+          <tr><th>假設身故年度</th><th>身故保險金（台幣）</th><th>清償貸款後</th><th>未被核課實拿</th><th>增額遺產稅</th><th>核課後實拿</th><th>稅負侵蝕</th></tr>
+        </thead>
+        <tbody id="taxBody"></tbody>
+      </table>
+    </div>
+    <div class="legend"><span>增額遺產稅 ＝（依實質課稅計入之身故保險金 − 貸款餘額之未償債務扣除）× 邊際稅率。</span></div>
+  </section>
+
+  <!-- SCENARIO TABLE -->
+  <section class="card">
+    <h2>匯率情境矩陣（核課後）</h2>
+    <p class="hint">以期初匯率為基準，台幣升貶各 5%～20% 對家屬稅後實拿與資金放大倍數的影響。倍數＝稅後實拿 ÷ 總投入成本。</p>
+    <div class="tscroll">
+      <table>
+        <thead>
+          <tr><th>情境</th><th>身故匯率</th><th>10 年稅後實拿</th><th>10 年倍數</th><th>20 年稅後實拿</th><th>20 年倍數</th></tr>
+        </thead>
+        <tbody id="scenBody"></tbody>
+      </table>
+    </div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--green)"></i>倍數 ≥ 2.0×</span>
+      <span><i class="dot" style="background:var(--amber)"></i>倍數 1.0–2.0×</span>
+      <span><i class="dot" style="background:var(--rust)"></i>倍數 &lt; 1.0×（實拿低於投入）</span>
+    </div>
+  </section>
+
+  <!-- BREAKEVEN -->
+  <section class="card">
+    <h2>損益兩平匯率</h2>
+    <p class="hint">家屬稅後實拿恰好等於總投入成本時的身故匯率。台幣升值至此以下，這張保單的槓桿就不再創造淨傳承效益。</p>
+    <div class="be-grid">
+      <div class="be" id="be10"></div>
+      <div class="be" id="be20"></div>
+    </div>
+  </section>
+
+  <!-- RISKS -->
+  <section class="card alert">
+    <h2>重要風險揭露</h2>
+    <p class="hint">請於投保前與客戶逐項確認，並保留說明紀錄。</p>
+    <ul class="risks">
+      <li><b>幣別錯配。</b>保單以美元計價、貸款以台幣計息，台幣升值將直接壓縮身故給付的台幣價值，且經槓桿放大。</li>
+      <li><b>稅務不確定性。</b>是否適用實質課稅由稽徵機關個案認定，本表僅為情境模擬，不構成稅務意見或核課結果之保證。</li>
+      <li><b>利率風險。</b>融資利率多為浮動計價，利率走升將提高持有成本；本表以固定單利假設簡化。</li>
+      <li><b>追繳保證金。</b>保單價值下滑或匯率變動導致貸放成數超限時，銀行得要求補提擔保品或提前清償，否則可能被強制解約。</li>
+      <li><b>稅源與流動性。</b>遺產稅須於申報期限內以現金繳納，而身故保險金須優先清償銀行債權，家屬可能面臨短期資金缺口。</li>
+      <li><b>保單本身風險。</b>非保證給付、解約費用、匯款成本與保險公司信用風險均未計入本試算。</li>
+    </ul>
+  </section>
+
+  <div class="foot">
+    <p><b>計算模型：</b>身故保險金以美元保額輸入，台幣受領金額 ＝ 美元保額 × 身故時匯率；台幣負債固定不動，不隨匯率變動。「目前匯率」僅用於情境矩陣之基準與滑桿定位。融資以單利計算；選擇「逐年自付利息」時，累計利息計入總投入成本、貸款餘額維持本金；選擇「利息滾入」時，貸款餘額＝本金＋累計利息，總投入成本僅含自備款。倍數＝稅後實拿 ÷ 總投入成本；年化＝(稅後實拿 − 總投入成本) ÷ 總投入成本 ÷ 年數（單利）。</p>
+    <p><b>稅務假設：</b>本版不推算遺產淨額，直接以單一邊際稅率估算本張保單的增額稅負：（計入之身故保險金 − 貸款餘額之未償債務扣除）× 邊際稅率，預設採遺產及贈與稅法第 13 條最高級距 20% 之保守假設。實際適用稅率取決於客戶身故時全部遺產淨額所落級距（現行為 10% / 15% / 20%），若其他遺產規模較小，實際稅負將低於本表。指定受益人之人壽保險金原依保險法第 112 條及遺贈稅法第 16 條第 9 款不計入遺產總額，惟稽徵機關得依納稅者權利保護法第 7 條、稅捐稽徵法第 12 條之 1 所定實質課稅原則核實認定。未償債務扣除依同法第 17 條第 1 項第 9 款，須檢附確實證明。若保險給付已依實質課稅計入遺產總額課徵遺產稅，原則上不再重複計入受益人之基本所得額；未被核課者，受益人與要保人不同時之死亡給付，仍須留意所得基本稅額條例之申報門檻。</p>
+    <p>本試算為結構示意，未計入解約費用、匯款成本、保單非保證分紅波動、遺產稅申報之其他扣除項目及稅務行政救濟成本，實際結果將有差異。本文件非要約、非投資建議、亦非稅務或法律意見，請客戶於決策前洽詢會計師或稅務顧問並確認自身風險承受度。</p>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const numIds=["premium","dpRate","loanRate","baseRate","taxRate","db10","db20","taxRatio"];
+  const selIds=["payMode","deductLoan"];
+  const defaults={premium:2000000,dpRate:40,loanRate:2,baseRate:32.30,taxRate:20,
+                  db10:160000,db20:180000,taxRatio:100,payMode:"annual",deductLoan:"1"};
+
+  const nf=n=>(n<0?"−":"")+Math.round(Math.abs(n)).toLocaleString("en-US");
+  const sf=n=>(n>=0?"+":"−")+Math.round(Math.abs(n)).toLocaleString("en-US");
+  const pf=n=>(n>=0?"+":"")+n.toFixed(2)+"%";
+  const r2=n=>n.toFixed(2);
+  const wan=n=>(n/10000).toFixed(0)+" 萬";
+
+  /* ---- 遺產稅：一律以單一邊際稅率估算（預設 20% 最高級距） ---- */
+
+  function readInputs(){
+    return {
+      P:+$("premium").value||0,
+      dpRate:+$("dpRate").value||0,
+      loanRate:+$("loanRate").value||0,
+      e0:+$("baseRate").value||1,
+      taxRate:Math.min(20,Math.max(0,+$("taxRate").value||0)),
+      db10:+$("db10").value||0,
+      db20:+$("db20").value||0,
+      ratio:Math.min(100,Math.max(0,+$("taxRatio").value||0)),
+      roll:$("payMode").value==="roll",
+      ded:$("deductLoan").value==="1"
+    };
+  }
+
+  function calc(usdDB,years,exit,I){
+    const dp=I.P*I.dpRate/100;
+    const loan=I.P-dp;
+    const annualInt=loan*I.loanRate/100;
+    const totalInt=annualInt*years;
+    const loanEnd=I.roll?loan+totalInt:loan;
+    const outInt=I.roll?0:totalInt;
+    const totalCost=dp+outInt;
+
+    const db=usdDB*exit;                         // 美元保額 × 身故時匯率 ＝ 台幣保險金
+    const gross=db-loanEnd;                       // 清償貸款後、稅前
+
+    const incl=db*I.ratio/100;                    // 依實質課稅計入遺產之保險金
+    const ded=I.ded?loanEnd:0;
+    const taxBase=Math.max(0,incl-ded);          // 計入之保險金 − 未償債務扣除
+    const tax=taxBase*I.taxRate/100;
+
+    const net=gross-tax;
+    const gain=net-totalCost;
+    const mult=totalCost>0?net/totalCost:0;
+    const ret=totalCost>0?gain/totalCost/years*100:0;
+    return {dp,loan,loanEnd,annualInt,totalInt,outInt,totalCost,db,gross,incl,ded,taxBase,tax,net,gain,mult,ret,
+            marg:I.taxRate};
+  }
+
+  function breakeven(usdDB,years,I,withTax){
+    let lo=0.01,hi=400,mid;
+    for(let i=0;i<80;i++){
+      mid=(lo+hi)/2;
+      const c=calc(usdDB,years,mid,I);
+      const v=(withTax?c.net:c.gross)-c.totalCost;
+      if(v<0) lo=mid; else hi=mid;
+    }
+    return hi;
+  }
+
+  function multCls(m){return m>=2?"g":m>=1?"a":"r";}
+  function multColor(m){return m>=2?"var(--green)":m>=1?"var(--amber)":"var(--rust)";}
+
+  /* ---- waterfall ---- */
+  function renderFall(el,years,c,I){
+    const scale=Math.max(c.db,c.totalCost,1);
+    const H=190;
+    const h=v=>Math.max(0,Math.min(1,v/scale))*H;
+    const pGross=h(Math.max(0,c.gross));
+    const pNet=h(Math.max(0,c.net));
+    const col=multColor(c.mult);
+    const loanLabel=I.roll?"扣貸款本利":"扣貸款本金";
+    const costLabel=I.roll?"總投入（自備款）":"總投入（自備款＋利息）";
+
+    el.innerHTML=`
+      <h3><span>假設第 ${years} 年身故</span><span class="mult" style="color:${col}">${c.mult.toFixed(2)}×</span></h3>
+      <div class="yr">家屬稅後實拿 ÷ 總投入成本；單利年化 ${pf(c.ret)}</div>
+      <div class="chart">
+        <div class="col">
+          <div class="bar db" style="height:${h(c.db)}px"><span class="val">${nf(c.db)}</span></div>
+          <div class="cap">身故保險金</div>
+        </div>
+        <div class="col">
+          <div class="spacer" style="height:${pGross}px"></div>
+          <div class="bar ded" style="height:${Math.max(0,h(c.db)-pGross)}px"><span class="val">−${nf(c.loanEnd)}</span></div>
+          <div class="cap">${loanLabel}</div>
+        </div>
+        <div class="col">
+          <div class="bar mid" style="height:${pGross}px;background:${c.gross<0?'var(--rust)':'var(--navy-2)'}"><span class="val">${nf(c.gross)}</span></div>
+          <div class="cap">稅前實拿</div>
+        </div>
+        <div class="col">
+          <div class="spacer" style="height:${pNet}px"></div>
+          <div class="bar tax" style="height:${Math.max(0,pGross-pNet)}px"><span class="val">−${nf(c.tax)}</span></div>
+          <div class="cap">扣遺產稅<br>(邊際 ${c.marg}%)</div>
+        </div>
+        <div class="col">
+          <div class="bar" style="height:${pNet}px;background:${c.net<0?'var(--rust)':'var(--green)'}"><span class="val">${nf(c.net)}</span></div>
+          <div class="cap">稅後實拿</div>
+        </div>
+        <div class="col">
+          <div class="bar cost" style="height:${h(c.totalCost)}px"><span class="val">${nf(c.totalCost)}</span></div>
+          <div class="cap">${costLabel}</div>
+        </div>
+      </div>
+      <div class="summary">
+        <span class="k">家屬稅後實拿</span>
+        <span class="v" style="color:${c.net<0?'var(--rust)':'var(--navy)'}">${nf(c.net)}　(${wan(c.net)})</span>
+      </div>
+      <div class="summary">
+        <span class="k">淨傳承效益（稅後實拿 − 總投入 ${nf(c.totalCost)}）</span>
+        <span class="v" style="color:${c.gain<0?'var(--rust)':'var(--green)'}">${sf(c.gain)}</span>
+      </div>
+      <div class="summary">
+        <span class="k">實質課稅造成的減損</span>
+        <span class="v" style="color:var(--rust)">−${nf(c.tax)}</span>
+      </div>`;
+  }
+
+  /* ---- payout headline ---- */
+  function renderPayout(I,exit,rows){
+    $("payout").innerHTML=rows.map(([y,usd,c])=>`
+      <div class="po">
+        <span class="pk">第 ${y} 年身故 · 家屬實際受領台幣</span>
+        <span class="pv" style="color:${c.net<0?'var(--rust)':'var(--navy)'}">${nf(c.net)}</span>
+        <span class="pw">約 ${wan(c.net)}　·　稅前 ${nf(c.gross)}</span>
+        <span class="pm">
+          美元保額 <i>${nf(usd)}</i> × 匯率 <i>${r2(exit)}</i> ＝ 台幣 <i>${nf(c.db)}</i><br>
+          清償貸款 <i class="neg">−${nf(c.loanEnd)}</i>　遺產稅 <i class="neg">−${nf(c.tax)}</i>
+        </span>
+      </div>`).join("");
+  }
+
+  /* ---- tax comparison ---- */
+  function renderTax(I,exit){
+    const body=$("taxBody");body.innerHTML="";
+    [[10,I.db10],[20,I.db20]].forEach(([y,dbB])=>{
+      const c=calc(dbB,y,exit,I);
+      const erosion=c.gross>0?c.tax/c.gross*100:0;
+      const tr=document.createElement("tr");
+      if(c.tax>0)tr.className="hi";
+      tr.innerHTML=`<td>第 ${y} 年身故</td>
+        <td>${nf(c.db)}</td>
+        <td>${nf(c.gross)}</td>
+        <td>${nf(c.gross)}</td>
+        <td style="color:var(--rust);font-weight:700">−${nf(c.tax)}</td>
+        <td style="font-weight:700">${nf(c.net)}</td>
+        <td>${erosion.toFixed(1)}%</td>`;
+      body.appendChild(tr);
+    });
+  }
+
+  /* ---- scenario matrix ---- */
+  const scen=[
+    {t:"台幣升值 20%",m:-20},{t:"台幣升值 15%",m:-15},{t:"台幣升值 10%",m:-10},{t:"台幣升值 5%",m:-5},
+    {t:"匯率持平",m:0},
+    {t:"台幣貶值 5%",m:5},{t:"台幣貶值 10%",m:10},{t:"台幣貶值 15%",m:15},{t:"台幣貶值 20%",m:20}
+  ];
+  function renderTable(I){
+    const body=$("scenBody");body.innerHTML="";
+    scen.forEach(s=>{
+      const exit=I.e0*(1+s.m/100);
+      const a=calc(I.db10,10,exit,I), b=calc(I.db20,20,exit,I);
+      const tr=document.createElement("tr");
+      if(s.m===0)tr.className="base";
+      tr.innerHTML=`<td>${s.t}</td><td>${r2(exit)}</td>`+
+        `<td>${nf(a.net)}</td><td><span class="tag ${multCls(a.mult)}">${a.mult.toFixed(2)}×</span></td>`+
+        `<td>${nf(b.net)}</td><td><span class="tag ${multCls(b.mult)}">${b.mult.toFixed(2)}×</span></td>`;
+      body.appendChild(tr);
+    });
+  }
+
+  function renderBE(I){
+    [[10,I.db10,"be10"],[20,I.db20,"be20"]].forEach(([y,dbB,id])=>{
+      const eT=breakeven(dbB,y,I,true);
+      const eN=breakeven(dbB,y,I,false);
+      const appr=(I.e0-eT)/I.e0*100;
+      const far=eT<=0.02;
+      $(id).innerHTML=`<div class="lab">第 ${y} 年身故 · 核課後</div>
+        <div class="rate">${far?"—":r2(eT)}</div>
+        <div class="note">${far
+          ? "在合理匯率區間內不會跌破投入成本。"
+          : `台幣需自 ${r2(I.e0)} 升值逾 <b>${appr.toFixed(1)}%</b>，家屬稅後實拿才會低於總投入成本。`}</div>
+        <div class="alt">若未被實質課稅，兩平匯率為 <b>${eN<=0.02?"—":r2(eN)}</b>；稅負把安全邊際往上推了 <b>${(eN<=0.02||far)?"—":(eT-eN).toFixed(2)}</b> 元。</div>`;
+    });
+  }
+
+  /* ---- feature checklist ---- */
+  const FEATS=[
+    {k:"debt",n:"舉債投保",d:"以貸款支應保費，本方案結構必然成立",locked:true},
+    {k:"lump",n:"躉繳投保",d:"一次繳清鉅額保費",on:true},
+    {k:"age",n:"高齡投保",d:"投保時年事已高"},
+    {k:"ill",n:"重病 / 帶病投保",d:"投保時已罹患重病或住院療養中"},
+    {k:"short",n:"短期投保",d:"投保後短期內即身故"},
+    {k:"big",n:"鉅額投保",d:"保額相對遺產規模顯不相當"},
+    {k:"dense",n:"密集投保",d:"短期內接續投保多張保單"},
+    {k:"neg",n:"保費接近或高於保額",d:"幾無保險保障之經濟實質"}
+  ];
+  function buildFeats(){
+    const c=$("feats");
+    c.innerHTML=FEATS.map(f=>`
+      <label class="feat ${f.locked?"locked":""}">
+        <input type="checkbox" data-k="${f.k}" ${f.on||f.locked?"checked":""} ${f.locked?"disabled":""}>
+        <span class="fx"><span class="fn">${f.n}</span><span class="fd">${f.d}</span></span>
+      </label>`).join("");
+    c.addEventListener("change",renderMeter);
+  }
+  function renderMeter(){
+    const boxes=[...$("feats").querySelectorAll("input")];
+    boxes.forEach(b=>b.closest(".feat").classList.toggle("on",b.checked&&!b.disabled));
+    const n=boxes.filter(b=>b.checked).length;
+    const pct=n/FEATS.length*100;
+    let band,color;
+    if(n<=2){band="風險不可忽視";color="var(--amber)";}
+    else if(n<=4){band="風險偏高";color="#c96a2c";}
+    else{band="風險高";color="var(--rust)";}
+    $("meterTxt").innerHTML=`${n} / ${FEATS.length} 項 · <span style="color:${color}">${band}</span>`;
+    $("meterFill").style.width=pct+"%";
+    $("meterFill").style.background=color;
+  }
+
+  function syncSlider(I){
+    const sl=$("fxSlider");
+    sl.min=(I.e0*0.72).toFixed(2);
+    sl.max=(I.e0*1.24).toFixed(2);
+    const labs=document.querySelectorAll(".rail-labels span");
+    labs[0].textContent=sl.min+"（台幣強）";
+    labs[1].textContent=r2(I.e0)+"（期初）";
+    labs[2].textContent=sl.max+"（台幣弱）";
+  }
+
+  function renderLive(){
+    const I=readInputs();
+    const exit=+$("fxSlider").value;
+    const move=(exit-I.e0)/I.e0*100;
+    $("fxVal").textContent=r2(exit);
+    const m=$("fxMove");
+    if(Math.abs(move)<0.05){
+      $("fxRel").textContent="（與期初持平）";
+      m.textContent="基準";m.style.background="var(--ivory)";m.style.color="var(--muted)";
+    }else if(move<0){
+      $("fxRel").textContent="";
+      m.textContent="台幣升值 "+Math.abs(move).toFixed(1)+"%";
+      m.style.background="var(--rust-soft)";m.style.color="var(--rust)";
+    }else{
+      $("fxRel").textContent="";
+      m.textContent="台幣貶值 "+move.toFixed(1)+"%";
+      m.style.background="var(--green-soft)";m.style.color="var(--green)";
+    }
+    const p10=calc(I.db10,10,exit,I), p20=calc(I.db20,20,exit,I);
+    renderPayout(I,exit,[[10,I.db10,p10],[20,I.db20,p20]]);
+    renderFall($("fall10"),10,p10,I);
+    renderFall($("fall20"),20,p20,I);
+    renderTax(I,exit);
+  }
+
+  function renderAll(){
+    const I=readInputs();
+    const dp=I.P*I.dpRate/100, loan=I.P-dp, annualInt=loan*I.loanRate/100;
+    $("d-dp").textContent=nf(dp);
+    $("d-loan").textContent=nf(loan);
+    $("d-int").textContent=nf(annualInt)+" /年";
+    $("d-tw10").textContent=nf(I.db10*I.e0);
+    $("d-tw20").textContent=nf(I.db20*I.e0);
+    const c10=calc(I.db10,10,I.e0,I);
+    $("d-marg").textContent=nf(c10.tax);
+    $("spotBase").textContent=r2(I.e0);
+    $("spotRatio").textContent=I.ratio+"%";
+    $("spotTax").textContent=I.taxRate+"%";
+    syncSlider(I);
+    renderLive();
+    renderTable(I);
+    renderBE(I);
+  }
+
+  numIds.forEach(id=>$(id).addEventListener("input",()=>{
+    if(id==="baseRate"){ $("fxSlider").value=(+$("baseRate").value||32.3); }
+    renderAll();
+  }));
+  selIds.forEach(id=>$(id).addEventListener("change",renderAll));
+  $("fxSlider").addEventListener("input",renderLive);
+  $("btnReset").addEventListener("click",()=>{
+    numIds.forEach(id=>$(id).value=defaults[id]);
+    selIds.forEach(id=>$(id).value=defaults[id]);
+    $("fxSlider").value=defaults.baseRate;
+    renderAll();
+  });
+  $("btnPrint").addEventListener("click",()=>window.print());
+
+  buildFeats();
+  renderMeter();
+  renderAll();
+})();
+</script>
+</body>
+</html>
