@@ -157,6 +157,18 @@
   .po .pm i{font-style:normal;font-family:var(--num);color:var(--ink);}
   .po .pm .neg{color:var(--rust);}
 
+  /* ---- Goal backsolve ---- */
+  .goal{margin-top:16px;border:1px solid var(--navy);border-radius:6px;overflow:hidden;}
+  .goal .gh{background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#f4efe2;padding:16px 18px;}
+  .goal .gs{font-size:13px;color:#cfd6e6;line-height:1.9;}
+  .goal .gs b{font-family:var(--num);color:#fff;font-size:22px;vertical-align:-1px;padding:0 2px;}
+  .goal .gs em{font-style:normal;font-family:var(--num);color:var(--gold-soft);font-size:20px;font-weight:700;padding:0 2px;}
+  .goal .gb{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);}
+  .goal .gi{background:#fdfcf9;padding:12px 14px;}
+  .goal .gi .gk{display:block;font-size:11.5px;color:var(--muted);}
+  .goal .gi .gv{display:block;font-family:var(--num);font-size:16px;font-weight:700;color:var(--navy);margin-top:2px;}
+  .goal .gn{background:var(--ivory);padding:10px 14px;font-size:11.5px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);}
+
   /* ---- Waterfall ---- */
   .fall{border:1px solid var(--line);border-radius:6px;padding:16px 16px 12px;background:#fdfcf9;margin-bottom:14px;}
   .fall:last-child{margin-bottom:0;}
@@ -222,6 +234,8 @@
     .grid{grid-template-columns:1fr 1fr;}
     .feats,.risks{grid-template-columns:1fr;}
     .be-grid,.payout{grid-template-columns:1fr;}
+    .goal .gb{grid-template-columns:1fr 1fr;}
+    .goal .gs b{font-size:19px;} .goal .gs em{font-size:17px;}
     .masthead h1{font-size:21px;}
     .masthead{padding:22px 20px;}
     .wrap{padding:18px 14px 48px;}
@@ -250,7 +264,7 @@
   <header class="masthead">
     <p class="eyebrow">亞灣專屬 · 保障型保費融資</p>
     <h1>身故保險金的真實落袋：舉債投保與實質課稅試算</h1>
-    <p class="sub">保障型保單以美元身故保額放大資產傳承效果，但「舉債投保」是財政部明列的實質課稅參考特徵之一。本工具同時呈現清償貸款後的稅前給付，以及被核課遺產稅後家屬真正拿到的金額。</p>
+    <p class="sub">保障型保單以美元身故保額放大資產傳承效果，但「舉債投保」是財政部明列的實質課稅參考特徵之一。本工具以「保障倍數」呈現槓桿效果——自有資金投入多少、家屬清償貸款並繳完遺產稅後真正拿到多少台幣。</p>
     <div class="spots">
       <span class="spot">採用匯率 USD/TWD <b id="spotBase">32.30</b></span>
       <span class="spot">實質課稅認定 <b id="spotRatio">100%</b></span>
@@ -265,7 +279,13 @@
     <div class="grid">
       <div class="field">
         <label>總保費（躉繳）</label>
-        <div class="inp"><input type="number" id="premium" value="2000000" step="10000"><span class="unit">元</span></div>
+        <div class="inp"><input type="number" id="premium" value="1000000" step="10000"><span class="unit" id="premUnit">USD</span></div>
+      </div>
+      <div class="field">
+        <label>保費幣別</label>
+        <div class="inp">
+          <select id="premCcy"><option value="usd" selected>美元 USD</option><option value="twd">台幣 TWD</option></select>
+        </div>
       </div>
       <div class="field">
         <label>自備款比例</label>
@@ -294,11 +314,11 @@
       </div>
       <div class="field">
         <label>第 10 年身故保險金 <span style="font-weight:400">(美元保額)</span></label>
-        <div class="inp"><input type="number" id="db10" value="160000" step="1000"><span class="unit">USD</span></div>
+        <div class="inp"><input type="number" id="db10" value="4700000" step="10000"><span class="unit">USD</span></div>
       </div>
       <div class="field">
         <label>第 20 年身故保險金 <span style="font-weight:400">(美元保額)</span></label>
-        <div class="inp"><input type="number" id="db20" value="180000" step="1000"><span class="unit">USD</span></div>
+        <div class="inp"><input type="number" id="db20" value="6500000" step="10000"><span class="unit">USD</span></div>
       </div>
       <div class="field">
         <label>實質課稅認定比例</label>
@@ -317,6 +337,7 @@
         <div class="chip">自備款（自有資金）<b id="d-dp"></b></div>
         <div class="chip">銀行融資本金<b id="d-loan"></b></div>
         <div class="chip">每年利息<b id="d-int"></b></div>
+        <div class="chip">保費折台幣<b id="d-ptw"></b></div>
         <div class="chip">10 年保額折台幣<b id="d-tw10"></b></div>
         <div class="chip">20 年保額折台幣<b id="d-tw20"></b></div>
         <div class="chip warn">第 10 年身故增額遺產稅<b id="d-marg"></b></div>
@@ -375,29 +396,48 @@
     <div class="legend"><span>增額遺產稅 ＝（依實質課稅計入之身故保險金 − 貸款餘額之未償債務扣除）× 邊際稅率。</span></div>
   </section>
 
+  <!-- GOAL BACKSOLVE -->
+  <section class="card">
+    <h2>目標傳承反推</h2>
+    <p class="hint">先決定想留給下一代多少錢，再依目前的保障倍數反推需要準備的自有資金。保費、自備款與美元保額同比例放大，保障倍數不隨規模改變。以目前匯率軸位置計算。</p>
+    <div class="grid">
+      <div class="field">
+        <label>目標傳承金額 <span style="font-weight:400">(家屬稅後受領台幣)</span></label>
+        <div class="inp"><input type="number" id="target" value="80000000" step="1000000"><span class="unit">元</span></div>
+      </div>
+      <div class="field">
+        <label>假設身故年度</label>
+        <div class="inp">
+          <select id="targetYear"><option value="10" selected>第 10 年身故</option><option value="20">第 20 年身故</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="goal" id="goalOut"></div>
+  </section>
+
   <!-- SCENARIO TABLE -->
   <section class="card">
     <h2>匯率情境矩陣（核課後）</h2>
-    <p class="hint">以期初匯率為基準，台幣升貶各 5%～20% 對家屬稅後實拿與資金放大倍數的影響。倍數＝稅後實拿 ÷ 總投入成本。</p>
+    <p class="hint">以期初匯率為基準，台幣升貶各 5%～20% 對家屬稅後受領金額與保障倍數的影響。保障倍數 ＝ 家屬稅後受領 ÷ 自備款（表中另可對照倍數門檻）。</p>
     <div class="tscroll">
       <table>
         <thead>
-          <tr><th>情境</th><th>身故匯率</th><th>10 年稅後實拿</th><th>10 年倍數</th><th>20 年稅後實拿</th><th>20 年倍數</th></tr>
+          <tr><th>情境</th><th>身故匯率</th><th>10 年稅後受領</th><th>10 年保障倍數</th><th>20 年稅後受領</th><th>20 年保障倍數</th></tr>
         </thead>
         <tbody id="scenBody"></tbody>
       </table>
     </div>
     <div class="legend">
-      <span><i class="dot" style="background:var(--green)"></i>倍數 ≥ 2.0×</span>
-      <span><i class="dot" style="background:var(--amber)"></i>倍數 1.0–2.0×</span>
-      <span><i class="dot" style="background:var(--rust)"></i>倍數 &lt; 1.0×（實拿低於投入）</span>
+      <span><i class="dot" style="background:var(--green)"></i>保障倍數 ≥ 5.0×</span>
+      <span><i class="dot" style="background:var(--amber)"></i>保障倍數 1.0–5.0×</span>
+      <span><i class="dot" style="background:var(--rust)"></i>保障倍數 &lt; 1.0×（受領低於投入，本金侵蝕）</span>
     </div>
   </section>
 
   <!-- BREAKEVEN -->
   <section class="card">
     <h2>損益兩平匯率</h2>
-    <p class="hint">家屬稅後實拿恰好等於總投入成本時的身故匯率。台幣升值至此以下，這張保單的槓桿就不再創造淨傳承效益。</p>
+    <p class="hint">保障倍數跌到 1.00 倍（家屬稅後受領恰好等於自備款）時的身故匯率。台幣升值至此以下，這張保單就不再放大傳承金額。</p>
     <div class="be-grid">
       <div class="be" id="be10"></div>
       <div class="be" id="be20"></div>
@@ -419,7 +459,7 @@
   </section>
 
   <div class="foot">
-    <p><b>計算模型：</b>身故保險金以美元保額輸入，台幣受領金額 ＝ 美元保額 × 身故時匯率；台幣負債固定不動，不隨匯率變動。「目前匯率」僅用於情境矩陣之基準與滑桿定位。融資以單利計算；選擇「逐年自付利息」時，累計利息計入總投入成本、貸款餘額維持本金；選擇「利息滾入」時，貸款餘額＝本金＋累計利息，總投入成本僅含自備款。倍數＝稅後實拿 ÷ 總投入成本；年化＝(稅後實拿 − 總投入成本) ÷ 總投入成本 ÷ 年數（單利）。</p>
+    <p><b>計算模型：</b>身故保險金以美元保額輸入，台幣受領金額 ＝ 美元保額 × 身故時匯率；台幣負債固定不動，不隨匯率變動。「期初／目前匯率」用於美元保費之台幣換算、情境矩陣基準與滑桿定位。融資以單利計算；選擇「逐年自付利息」時，累計利息計入總投入成本、貸款餘額維持本金；選擇「利息滾入」時，貸款餘額＝本金＋累計利息，總投入成本僅含自備款。<b>保障倍數 ＝ 家屬稅後受領台幣金額 ÷ 自備款</b>，另同步列示以「自備款＋累計利息」為分母之倍數。保費可選美元或台幣計價，選美元時一律以期初匯率換算為台幣後計算自備款與融資金額；美元保額與台幣負債之幣別錯配即為本工具情境分析之核心。本工具不呈現年化報酬率：身故時點不可預期，以年化報酬包裝身故給付易生誤導。</p>
     <p><b>稅務假設：</b>本版不推算遺產淨額，直接以單一邊際稅率估算本張保單的增額稅負：（計入之身故保險金 − 貸款餘額之未償債務扣除）× 邊際稅率，預設採遺產及贈與稅法第 13 條最高級距 20% 之保守假設。實際適用稅率取決於客戶身故時全部遺產淨額所落級距（現行為 10% / 15% / 20%），若其他遺產規模較小，實際稅負將低於本表。指定受益人之人壽保險金原依保險法第 112 條及遺贈稅法第 16 條第 9 款不計入遺產總額，惟稽徵機關得依納稅者權利保護法第 7 條、稅捐稽徵法第 12 條之 1 所定實質課稅原則核實認定。未償債務扣除依同法第 17 條第 1 項第 9 款，須檢附確實證明。若保險給付已依實質課稅計入遺產總額課徵遺產稅，原則上不再重複計入受益人之基本所得額；未被核課者，受益人與要保人不同時之死亡給付，仍須留意所得基本稅額條例之申報門檻。</p>
     <p>本試算為結構示意，未計入解約費用、匯款成本、保單非保證分紅波動、遺產稅申報之其他扣除項目及稅務行政救濟成本，實際結果將有差異。本文件非要約、非投資建議、亦非稅務或法律意見，請客戶於決策前洽詢會計師或稅務顧問並確認自身風險承受度。</p>
   </div>
@@ -429,25 +469,30 @@
 <script>
 (function(){
   const $=id=>document.getElementById(id);
-  const numIds=["premium","dpRate","loanRate","baseRate","taxRate","db10","db20","taxRatio"];
-  const selIds=["payMode","deductLoan"];
-  const defaults={premium:2000000,dpRate:40,loanRate:2,baseRate:32.30,taxRate:20,
-                  db10:160000,db20:180000,taxRatio:100,payMode:"annual",deductLoan:"1"};
+  const numIds=["premium","dpRate","loanRate","baseRate","taxRate","db10","db20","taxRatio","target"];
+  const selIds=["payMode","deductLoan","targetYear","premCcy"];
+  const defaults={premium:1000000,dpRate:40,loanRate:2,baseRate:32.30,taxRate:20,
+                  db10:4700000,db20:6500000,taxRatio:100,target:80000000,
+                  payMode:"annual",deductLoan:"1",targetYear:"10",premCcy:"usd"};
 
   const nf=n=>(n<0?"−":"")+Math.round(Math.abs(n)).toLocaleString("en-US");
   const sf=n=>(n>=0?"+":"−")+Math.round(Math.abs(n)).toLocaleString("en-US");
-  const pf=n=>(n>=0?"+":"")+n.toFixed(2)+"%";
   const r2=n=>n.toFixed(2);
   const wan=n=>(n/10000).toFixed(0)+" 萬";
 
   /* ---- 遺產稅：一律以單一邊際稅率估算（預設 20% 最高級距） ---- */
 
   function readInputs(){
+    const e0=+$("baseRate").value||1;
+    const pIn=+$("premium").value||0;
+    const usdPrem=$("premCcy").value==="usd";
     return {
-      P:+$("premium").value||0,
+      pIn, usdPrem,
+      P:usdPrem?pIn*e0:pIn,                      // 一律換算為台幣後計算融資
+      Pusd:usdPrem?pIn:pIn/e0,
       dpRate:+$("dpRate").value||0,
       loanRate:+$("loanRate").value||0,
-      e0:+$("baseRate").value||1,
+      e0,
       taxRate:Math.min(20,Math.max(0,+$("taxRate").value||0)),
       db10:+$("db10").value||0,
       db20:+$("db20").value||0,
@@ -476,10 +521,11 @@
 
     const net=gross-tax;
     const gain=net-totalCost;
-    const mult=totalCost>0?net/totalCost:0;
-    const ret=totalCost>0?gain/totalCost/years*100:0;
-    return {dp,loan,loanEnd,annualInt,totalInt,outInt,totalCost,db,gross,incl,ded,taxBase,tax,net,gain,mult,ret,
-            marg:I.taxRate};
+    const multDP=dp>0?net/dp:0;                   // 主指標：稅後受領 ÷ 自備款
+    const multCost=totalCost>0?net/totalCost:0;   // 含累計利息
+    const multPre=dp>0?gross/dp:0;                // 未被核課（稅前）÷ 自備款
+    return {dp,loan,loanEnd,annualInt,totalInt,outInt,totalCost,db,gross,incl,ded,taxBase,tax,net,gain,
+            mult:multDP,multDP,multCost,multPre,marg:I.taxRate};
   }
 
   function breakeven(usdDB,years,I,withTax){
@@ -487,14 +533,14 @@
     for(let i=0;i<80;i++){
       mid=(lo+hi)/2;
       const c=calc(usdDB,years,mid,I);
-      const v=(withTax?c.net:c.gross)-c.totalCost;
+      const v=(withTax?c.net:c.gross)-c.dp;
       if(v<0) lo=mid; else hi=mid;
     }
     return hi;
   }
 
-  function multCls(m){return m>=2?"g":m>=1?"a":"r";}
-  function multColor(m){return m>=2?"var(--green)":m>=1?"var(--amber)":"var(--rust)";}
+  function multCls(m){return m>=5?"g":m>=1?"a":"r";}
+  function multColor(m){return m>=5?"var(--green)":m>=1?"var(--amber)":"var(--rust)";}
 
   /* ---- waterfall ---- */
   function renderFall(el,years,c,I){
@@ -509,7 +555,7 @@
 
     el.innerHTML=`
       <h3><span>假設第 ${years} 年身故</span><span class="mult" style="color:${col}">${c.mult.toFixed(2)}×</span></h3>
-      <div class="yr">家屬稅後實拿 ÷ 總投入成本；單利年化 ${pf(c.ret)}</div>
+      <div class="yr">保障倍數 ＝ 家屬稅後受領 ${nf(c.net)} ÷ 自備款 ${nf(c.dp)}；若未被實質課稅則為 ${c.multPre.toFixed(2)}×</div>
       <div class="chart">
         <div class="col">
           <div class="bar db" style="height:${h(c.db)}px"><span class="val">${nf(c.db)}</span></div>
@@ -543,8 +589,8 @@
         <span class="v" style="color:${c.net<0?'var(--rust)':'var(--navy)'}">${nf(c.net)}　(${wan(c.net)})</span>
       </div>
       <div class="summary">
-        <span class="k">淨傳承效益（稅後實拿 − 總投入 ${nf(c.totalCost)}）</span>
-        <span class="v" style="color:${c.gain<0?'var(--rust)':'var(--green)'}">${sf(c.gain)}</span>
+        <span class="k">保障倍數（加計 ${years} 年累計利息，總投入 ${nf(c.totalCost)}）</span>
+        <span class="v" style="color:var(--navy)">${c.multCost.toFixed(2)}×</span>
       </div>
       <div class="summary">
         <span class="k">實質課稅造成的減損</span>
@@ -558,12 +604,39 @@
       <div class="po">
         <span class="pk">第 ${y} 年身故 · 家屬實際受領台幣</span>
         <span class="pv" style="color:${c.net<0?'var(--rust)':'var(--navy)'}">${nf(c.net)}</span>
-        <span class="pw">約 ${wan(c.net)}　·　稅前 ${nf(c.gross)}</span>
+        <span class="pw">約 ${wan(c.net)}　·　保障倍數 <span style="color:${multColor(c.multDP)}">${c.multDP.toFixed(2)}×</span> <span style="color:var(--muted);font-weight:400">（自備款基礎；含累計利息 ${c.multCost.toFixed(2)}×）</span></span>
         <span class="pm">
           美元保額 <i>${nf(usd)}</i> × 匯率 <i>${r2(exit)}</i> ＝ 台幣 <i>${nf(c.db)}</i><br>
-          清償貸款 <i class="neg">−${nf(c.loanEnd)}</i>　遺產稅 <i class="neg">−${nf(c.tax)}</i>
+          清償貸款 <i class="neg">−${nf(c.loanEnd)}</i>　遺產稅 <i class="neg">−${nf(c.tax)}</i><br>
+          自備款 <i>${nf(c.dp)}</i>（含累計利息共 <i>${nf(c.totalCost)}</i>）　→　放大為 <i>${nf(c.net)}</i>
         </span>
       </div>`).join("");
+  }
+
+  /* ---- goal backsolve (linear scaling) ---- */
+  function renderGoal(I,exit){
+    const y=+$("targetYear").value;
+    const c=calc(y===10?I.db10:I.db20,y,exit,I);
+    const target=+$("target").value||0;
+    const el=$("goalOut");
+    if(c.net<=0||c.totalCost<=0||target<=0){
+      el.innerHTML=`<div class="gh"><span class="gs">目前情境下保障倍數不成立（家屬稅後受領為零或負值），無法反推所需資金。請調整匯率、保額或融資條件。</span></div>`;
+      return;
+    }
+    const k=target/c.net;
+    el.innerHTML=`
+      <div class="gh"><span class="gs">
+        以保障倍數 <em>${c.multDP.toFixed(2)}×</em> 計算：想在第 ${y} 年留給下一代
+        <b>${wan(target)}</b>，自備款只需準備 <b>${wan(c.dp*k)}</b>，
+        加計 ${y} 年利息後自有資金合計 <b>${wan(c.totalCost*k)}</b>。
+      </span></div>
+      <div class="gb">
+        <div class="gi"><span class="gk">需要自備款</span><span class="gv">${nf(c.dp*k)}</span></div>
+        <div class="gi"><span class="gk">${I.roll?"利息滾入貸款":"累計利息（自付）"}</span><span class="gv">${nf(c.outInt*k)}</span></div>
+        <div class="gi"><span class="gk">對應總保費（USD）</span><span class="gv">${nf(I.Pusd*k)}</span></div>
+        <div class="gi"><span class="gk">對應美元保額</span><span class="gv">${nf((y===10?I.db10:I.db20)*k)}</span></div>
+      </div>
+      <div class="gn">同步放大後：銀行融資 ${nf(c.loanEnd*k)}、身故台幣保險金 ${nf(c.db*k)}、增額遺產稅 ${nf(c.tax*k)}。放大規模同時放大匯率與追繳風險，且鉅額投保本身即為實質課稅參考特徵之一，保額與資力是否相當須留意。</div>`;
   }
 
   /* ---- tax comparison ---- */
@@ -614,8 +687,8 @@
       $(id).innerHTML=`<div class="lab">第 ${y} 年身故 · 核課後</div>
         <div class="rate">${far?"—":r2(eT)}</div>
         <div class="note">${far
-          ? "在合理匯率區間內不會跌破投入成本。"
-          : `台幣需自 ${r2(I.e0)} 升值逾 <b>${appr.toFixed(1)}%</b>，家屬稅後實拿才會低於總投入成本。`}</div>
+          ? "在合理匯率區間內保障倍數不會跌破 1.00 倍。"
+          : `台幣需自 ${r2(I.e0)} 升值逾 <b>${appr.toFixed(1)}%</b>，保障倍數才會跌破 1.00 倍。`}</div>
         <div class="alt">若未被實質課稅，兩平匯率為 <b>${eN<=0.02?"—":r2(eN)}</b>；稅負把安全邊際往上推了 <b>${(eN<=0.02||far)?"—":(eT-eN).toFixed(2)}</b> 元。</div>`;
     });
   }
@@ -687,6 +760,7 @@
     renderFall($("fall10"),10,p10,I);
     renderFall($("fall20"),20,p20,I);
     renderTax(I,exit);
+    renderGoal(I,exit);
   }
 
   function renderAll(){
@@ -695,6 +769,8 @@
     $("d-dp").textContent=nf(dp);
     $("d-loan").textContent=nf(loan);
     $("d-int").textContent=nf(annualInt)+" /年";
+    $("premUnit").textContent=I.usdPrem?"USD":"元";
+    $("d-ptw").textContent=nf(I.P);
     $("d-tw10").textContent=nf(I.db10*I.e0);
     $("d-tw20").textContent=nf(I.db20*I.e0);
     const c10=calc(I.db10,10,I.e0,I);
