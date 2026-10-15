@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>質押槓桿試算</title>
+<style>
+/* Layout: navy masthead → holdings ledger (add/edit rows, per-row pledge) → loan & margin status → yield swap → stress test → disclosure */
+:root{
+  --bg:#f3f5f9; --paper:#ffffff; --ink:#13203a; --muted:#5a6680; --line:#d8dde7; --field:#f6f7fa;
+  --band:#13284b; --band-ink:#f2ead6; --gold:#9c7726; --gold-hi:#c9a24e; --gold-soft:#f3ecda;
+  --seg-a:#1f3c6e; --seg-b:#c9a24e; --track:#e6e9f0;
+  --good:#2b7a57; --warn:#a86b12; --bad:#b03636; --good-bg:#e3f2ea; --warn-bg:#fbf0dc; --bad-bg:#f8e3e3;
+  --f-display:"Songti TC","Noto Serif TC","Noto Serif CJK TC","PMingLiU",Georgia,serif;
+  --f-body:"PingFang TC","Microsoft JhengHei","Noto Sans TC","Noto Sans CJK TC",system-ui,sans-serif;
+  --f-num:"SF Mono","Roboto Mono",Consolas,"Microsoft JhengHei",monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0a1324; --paper:#101c33; --ink:#e7ebf3; --muted:#97a3bc; --line:#23324f; --field:#0c172b;
+  --band:#0d1830; --band-ink:#ecdcb3; --gold:#d6b46c; --gold-hi:#d6b46c; --gold-soft:#1d2534;
+  --seg-a:#4d6fae; --seg-b:#d6b46c; --track:#1b2a46;
+  --good:#5fc196; --warn:#e2a64a; --bad:#ec7a7a; --good-bg:#12302a; --warn-bg:#33281a; --bad-bg:#3a1d22; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0a1324; --paper:#101c33; --ink:#e7ebf3; --muted:#97a3bc; --line:#23324f; --field:#0c172b;
+  --band:#0d1830; --band-ink:#ecdcb3; --gold:#d6b46c; --gold-hi:#d6b46c; --gold-soft:#1d2534;
+  --seg-a:#4d6fae; --seg-b:#d6b46c; --track:#1b2a46;
+  --good:#5fc196; --warn:#e2a64a; --bad:#ec7a7a; --good-bg:#12302a; --warn-bg:#33281a; --bad-bg:#3a1d22; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.band{background:var(--band);color:var(--band-ink);border-bottom:2px solid var(--gold-hi)}
+header.band .wrap{padding-block:22px 18px;display:flex;flex-wrap:wrap;gap:6px 24px;align-items:flex-end;justify-content:space-between}
+.eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-hi)}
+h1{font-family:var(--f-display);font-weight:700;font-size:28px;margin:4px 0 0;letter-spacing:.04em}
+header .note{font-size:12px;opacity:.75}
+main.wrap{padding-block:20px 40px;display:grid;gap:18px}
+section{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px;min-width:0}
+h2{font-family:var(--f-display);font-size:18px;margin:0 0 12px;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline}
+h2 small{font-family:var(--f-body);font-size:12px;color:var(--muted);font-weight:400}
+.lbl{font-size:12px;color:var(--muted);letter-spacing:.04em}
+input,select{font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%;min-width:0}
+input.n{font-family:var(--f-num);font-variant-numeric:tabular-nums;text-align:right}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--gold-hi);outline-offset:2px}
+button{font:inherit;cursor:pointer}
+.btn{border:1px solid var(--gold);background:transparent;color:var(--gold);border-radius:999px;padding:7px 16px;font-size:13px;font-weight:600}
+.btn.solid{background:var(--band);color:var(--band-ink);border-color:var(--band)}
+.btn.ghost{border-color:var(--line);color:var(--muted);font-weight:400}
+.printbtn{margin-top:8px;border-color:var(--gold-hi);color:var(--band-ink)}
+
+/* ledger */
+.ledger{display:grid;gap:0}
+.lrow{display:grid;grid-template-columns:minmax(120px,1.6fr) 92px 88px minmax(110px,1.2fr) 74px 70px minmax(110px,1.2fr) minmax(96px,1fr) minmax(90px,1fr) 34px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.lrow.head{font-size:12px;color:var(--muted);padding-top:0}
+.lrow.head span:nth-child(n+4){text-align:right}
+.lrow .sub{font-size:11px;color:var(--muted);text-align:right;margin-top:2px}
+@media (max-width:860px){.lrow .sub{text-align:left}}
+.lrow .c{font-family:var(--f-num);font-variant-numeric:tabular-nums;text-align:right;font-size:14px}
+.lrow .c.dim{color:var(--muted)}
+.lrow .k{display:none}
+.lrow.off{opacity:1}
+.lrow.borrow{background:linear-gradient(90deg,var(--gold-soft),transparent 60%)}
+.pl{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:5px 0;width:100%;font-size:13px;font-weight:600}
+.pl[aria-pressed="true"]{background:var(--band);color:var(--band-ink);border-color:var(--band)}
+:root[data-theme="dark"] .pl[aria-pressed="true"]{border-color:var(--gold)}
+.del{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;padding:4px}
+.del:hover{color:var(--bad)}
+.lrow.foot{border-bottom:0;font-weight:700}
+.lrow.foot .c{font-size:15px}
+.ledger-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;justify-content:space-between}
+@media (max-width:860px){
+  .lrow.head{display:none}
+  .lrow{grid-template-columns:1fr 1fr;gap:8px 10px;padding:12px;border:1px solid var(--line);border-radius:8px;margin-bottom:10px}
+  .lrow .k{display:block;font-size:11px;color:var(--muted);margin-bottom:2px}
+  .lrow>div{min-width:0}
+  .lrow .nm{grid-column:1/-1}
+  .lrow .c{text-align:left}
+  .lrow .delc{grid-column:1/-1;text-align:right}
+  .lrow.foot{border:0;padding:4px 0}
+  .lrow.foot .nm{grid-column:1/-1}
+  .lrow.foot .sp{display:none}
+}
+
+/* loan + status */
+.loanbar{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:end}
+.unit{position:relative}.unit span{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);pointer-events:none}
+.unit input{padding-right:28px}
+.status{margin-top:16px;border-radius:8px;padding:14px 16px;display:grid;gap:10px}
+.status.ok{background:var(--good-bg)}.status.warn{background:var(--warn-bg)}.status.bad{background:var(--bad-bg)}
+.status .head{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline}
+.status .tag{font-weight:700;font-size:15px}
+.status.ok .tag{color:var(--good)}.status.warn .tag{color:var(--warn)}.status.bad .tag{color:var(--bad)}
+.eq{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:14px;overflow-wrap:anywhere}
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.fig .v{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:19px;font-weight:600}
+.gtrack{position:relative;height:18px;background:var(--track);border-radius:4px;margin-top:4px}
+.gfill{position:absolute;inset:0 auto 0 0;border-radius:4px}
+.gfill.ok{background:var(--good)}.gfill.warn{background:var(--warn)}.gfill.bad{background:var(--bad)}
+.gmark{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink)}
+.ticks{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:var(--f-num)}
+.comp{position:relative;height:26px;background:var(--paper);border-radius:4px;display:flex;margin-top:4px;border:1px solid var(--line)}
+.comp .cs{height:100%;border-right:1px solid var(--paper)}
+.comp .cl{position:absolute;top:-6px;bottom:-6px;width:3px;background:var(--bad);border-radius:2px}
+.clg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin-top:6px}
+.clg i{display:inline-block;width:10px;height:10px;margin-right:5px;vertical-align:-1px;border-radius:2px}
+.big2{font-size:18px;color:var(--ink)!important;font-weight:500!important}
+.big2 b{font-family:var(--f-num);font-size:22px}
+.status.ok .big2 b{color:var(--good)}.status.warn .big2 b{color:var(--warn)}.status.bad .big2{color:var(--bad)!important}
+.meter{display:flex;height:34px;border-radius:6px;overflow:hidden;background:var(--paper);border:1px solid var(--line)}
+.meter>div{display:flex;align-items:center;min-width:0;overflow:hidden;white-space:nowrap}
+.meter span{padding:0 10px;font-size:13px;font-weight:600}
+.meter .used{background:var(--seg-a);color:#fff}
+.meter .used.warn{background:var(--warn)}.meter .used.bad{background:var(--bad)}
+.meter .left{flex:1;justify-content:flex-end;color:var(--good)}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.three .v{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:clamp(15px,4vw,20px);font-weight:600}
+.warnline{font-size:13px;color:var(--warn)}
+
+/* yield */
+.hero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px}
+@media (max-width:720px){.hero{grid-template-columns:1fr}}
+.yieldswap{border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.yieldswap .y{display:grid;gap:2px}
+.big{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:34px;font-weight:600;line-height:1.1}
+.big.new{color:var(--gold)}
+.arrow{font-size:22px;color:var(--muted)}
+.delta{font-size:13px;color:var(--muted);flex-basis:100%}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{border-top:2px solid var(--line);padding-top:8px}
+.kpi .v{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:20px;font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:12px;font-weight:500;color:var(--muted)}
+td{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+td:first-child{font-family:var(--f-body)}
+tr.total td{font-weight:700;border-top:2px solid var(--ink);border-bottom:0}
+.neg{color:var(--bad)}
+.tscroll{overflow-x:auto;margin-top:14px}
+input[type=range]{accent-color:var(--gold-hi);padding:0;border:0;background:transparent}
+.stressout{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px}
+.explain{margin:0 0 14px;font-size:14px;max-width:68ch;color:var(--ink)}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.card{border:1px solid var(--line);border-radius:8px;padding:14px;display:grid;gap:10px;min-width:0}
+.card.cur{border:2px solid var(--gold)}
+.card .ttl{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.card .ttl b{font-size:15px}
+.curtag{font-size:11px;font-weight:700;color:var(--paper);background:var(--gold);border-radius:999px;padding:2px 8px}
+.drop{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:30px;font-weight:700;line-height:1}
+.drop.ok{color:var(--good)}.drop.warn{color:var(--warn)}.drop.bad{color:var(--bad)}
+.bar{position:relative;height:30px;background:var(--track);border-radius:4px}
+.bar .cap{position:absolute;inset:0 auto 0 0;background:var(--seg-a);border-radius:4px;opacity:.35}
+.bar .buf{position:absolute;top:0;bottom:0;background:var(--good);opacity:.85;border-radius:0 4px 4px 0}
+.bar .buf.warn{background:var(--warn)}.bar .buf.bad{background:var(--bad)}
+.bar .ln{position:absolute;top:-6px;bottom:-6px;width:3px;background:var(--bad);border-radius:2px}
+.mini{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px}
+.mini .v{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-weight:600;font-size:15px}
+.cmplegend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--muted);margin-top:12px}
+.cmplegend i{display:inline-block;width:12px;height:10px;margin-right:5px;vertical-align:-1px;border-radius:2px}
+.lg-cap{background:var(--seg-a);opacity:.35}.lg-line{background:var(--bad);width:3px!important}.lg-buf{background:var(--good)}
+.hint{font-size:12px;color:var(--muted);margin:8px 0 0}
+.disc{font-size:12px;color:var(--muted);line-height:1.7}
+.disc h2{font-size:15px}
+.disc ol{margin:0;padding-left:20px;display:grid;gap:4px}
+@media print{input[type=range],.ledger-actions,.del,.printbtn{display:none}section{break-inside:avoid}header.band{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+@media (prefers-reduced-motion:no-preference){.gfill,.gmark{transition:all .25s ease}}
+</style>
+</head>
+<body>
+
+<header class="band"><div class="wrap">
+  <div>
+    <div class="eyebrow">Premium Banking · Lombard Lending</div>
+    <h1>質押槓桿試算</h1>
+  </div>
+  <div class="note">多重商品質押 · 新舊殖利率換算 · 幣別 TWD<br><button type="button" class="btn printbtn" onclick="window.print()">列印 / 匯出 PDF</button></div>
+</div></header>
+
+<main class="wrap">
+
+<section>
+  <h2>持有商品與擔保品 <small>每一筆可自由新增、編輯，設質金額可只設部分</small></h2>
+  <div class="ledger" id="ledger"></div>
+  <div class="ledger-actions">
+    <button class="btn solid" id="addBtn" type="button">＋ 新增商品</button>
+    <button class="btn ghost" id="resetBtn" type="button">回復範例</button>
+  </div>
+</section>
+
+<section>
+  <h2>借款與追繳檢核 <small>規則：設質金額 × LTV 合計必須大於借款餘額</small></h2>
+  <div class="loanbar">
+    <div><label class="lbl" for="loan">借款金額</label><input class="n" type="text" id="loan" inputmode="numeric"></div>
+    <div><label class="lbl" for="rate">質押借款利率（年）</label><div class="unit"><input class="n" type="number" id="rate" step="0.01"><span>%</span></div></div>
+    <div><span class="lbl">總質借門檻（可借上限）</span><div class="fig"><div class="v" id="tTxt"></div></div></div>
+  </div>
+  <div class="status" id="status"></div>
+</section>
+
+<section>
+  <h2>新舊殖利率換算 <small>以自有資金為分母</small></h2>
+  <div class="hero">
+    <div class="yieldswap">
+      <div class="y"><span class="lbl">原殖利率</span><span class="big" id="oldY"></span></div>
+      <span class="arrow">→</span>
+      <div class="y"><span class="lbl">新殖利率（已扣借款利息）</span><span class="big new" id="newY"></span></div>
+      <div class="delta" id="deltaTxt"></div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="lbl">槓桿倍數</div><div class="v" id="levTxt"></div></div>
+      <div class="kpi"><div class="lbl">月淨收益</div><div class="v" id="monTxt"></div></div>
+      <div class="kpi"><div class="lbl">自有資金</div><div class="v" id="ownTxt"></div></div>
+      <div class="kpi"><div class="lbl">借款部位利差</div><div class="v" id="spreadTxt"></div></div>
+    </div>
+  </div>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>收益拆解</th><th>本金</th><th>年</th><th>月</th></tr></thead>
+      <tbody id="incBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>壓力測試 <small>設質擔保品同步漲跌</small></h2>
+  <div style="display:flex;justify-content:space-between;gap:8px"><label class="lbl" for="stress">擔保品市值變動</label><b id="stressTxt" style="font-family:var(--f-num)"></b></div>
+  <input type="range" id="stress" min="-70" max="30" step="1" value="-20" style="width:100%">
+  <div class="stressout">
+    <div class="kpi"><div class="lbl">設質擔保品市值</div><div class="v" id="sV"></div></div>
+    <div class="kpi"><div class="lbl">質借門檻</div><div class="v" id="sT"></div></div>
+    <div class="kpi"><div class="lbl">額度使用率</div><div class="v" id="sU"></div></div>
+    <div class="kpi"><div class="lbl">30 天內需還款</div><div class="v" id="sC"></div></div>
+    <div class="kpi"><div class="lbl">或補擔保品市值</div><div class="v" id="sC2"></div></div>
+  </div>
+</section>
+
+<section class="disc">
+  <h2>風險說明</h2>
+  <ol>
+    <li>本頁為示意試算，非投資建議或要約；實際 LTV、利率、集中度控管與追繳規則以銀行核定及契約為準。</li>
+    <li>殖利率／配息率非保證，基金配息可能來自本金；保單以宣告利率或保價金計算，亦非保證。</li>
+    <li>當設質擔保品市值 × LTV 小於或等於借款餘額即觸發追繳，須於 30 天內還款或補足擔保品，否則銀行得處分擔保品。</li>
+    <li>未設質的部分不計入質借門檻，但其市值漲跌仍影響客戶整體淨值。定存、活存設質期間不得自由動用，定存提前解約可能減損利息。</li>
+    <li>質押利率多為浮動，利率上升將壓縮利差。本試算假設幣別一致；跨幣別配置另有匯率風險，結構債另有發行機構信用與以股票交割等風險。</li>
+  </ol>
+</section>
+</main>
+
+<script>
+const CAT={'基金':{y:8.5,ltv:80},'股票':{y:3.0,ltv:60},'債券':{y:5.0,ltv:70},'結構債':{y:10.0,ltv:50},'保險':{y:4.0,ltv:70},'定存':{y:1.7,ltv:80},'活存':{y:0.5,ltv:80}};
+const SAMPLE=()=>({rate:1.91,loan:20000000,rows:[
+  {name:'聯博美國收益',cat:'基金',src:'自有',mv:30000000,y:8.5,ltv:80,pp:1},
+  {name:'聯博美國收益',cat:'基金',src:'借款',mv:20000000,y:8.5,ltv:80,pp:0.5},
+  {name:'台幣定存',cat:'定存',src:'自有',mv:3000000,y:1.7,ltv:80,pp:1}]});
+let S;
+try{S=JSON.parse(localStorage.getItem('lev-calc-v4'))}catch(e){}
+if(!S||!Array.isArray(S.rows))S=SAMPLE();
+const save=()=>{try{localStorage.setItem('lev-calc-v4',JSON.stringify(S))}catch(e){}};
+const $=id=>document.getElementById(id);
+const num=s=>{const v=parseFloat(String(s).replace(/[^\d.\-]/g,''));return isFinite(v)?v:0};
+const f0=n=>Math.round(n).toLocaleString('en-US');
+const pc=(x,d=2)=>(x*100).toFixed(d)+'%';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function renderLedger(){
+  const L=$('ledger');
+  let h=`<div class="lrow head"><span>商品名稱</span><span>類別</span><span>資金來源</span><span>市值</span><span>殖利率%</span><span>LTV%</span><span>設質金額</span><span>可借額度</span><span>年配息</span><span></span></div>`;
+  S.rows.forEach((r,i)=>{
+    h+=`<div class="lrow ${r.src==='借款'?'borrow':''}" data-i="${i}">
+      <div class="nm"><span class="k">商品名稱</span><input data-f="name" value="${esc(r.name)}" aria-label="商品名稱"></div>
+      <div><span class="k">類別</span><select data-f="cat" aria-label="類別">${Object.keys(CAT).map(c=>`<option${c===r.cat?' selected':''}>${c}</option>`).join('')}</select></div>
+      <div><span class="k">資金來源</span><select data-f="src" aria-label="資金來源"><option${r.src==='自有'?' selected':''}>自有</option><option${r.src==='借款'?' selected':''}>借款</option></select></div>
+      <div><span class="k">市值</span><input class="n" data-f="mv" inputmode="numeric" value="${f0(r.mv)}" aria-label="市值"></div>
+      <div><span class="k">殖利率%</span><input class="n" type="number" step="0.1" data-f="y" value="${r.y}" aria-label="殖利率"></div>
+      <div><span class="k">LTV%</span><input class="n" type="number" step="5" min="0" max="100" data-f="ltv" value="${r.ltv}" aria-label="LTV"></div>
+      <div><span class="k">設質金額</span><input class="n" data-f="pa" inputmode="numeric" value="${f0(r.mv*r.pp)}" aria-label="設質金額"><div class="sub" data-out="pp"></div></div>
+      <div><span class="k">可借額度</span><div class="c" data-out="cap"></div></div>
+      <div><span class="k">年配息</span><div class="c" data-out="inc"></div></div>
+      <div class="delc"><button type="button" class="del" data-f="del" aria-label="刪除此筆">×</button></div>
+    </div>`;
+  });
+  h+=`<div class="lrow foot"><div class="nm">合計</div><div class="sp"></div><div class="sp"></div><div><span class="k">總市值</span><div class="c" id="totMv"></div></div><div class="sp"></div><div class="sp"></div><div class="sp"></div><div><span class="k">總質借門檻</span><div class="c" id="totCap"></div></div><div><span class="k">總年配息</span><div class="c" id="totInc"></div></div><div class="sp"></div></div>`;
+  L.innerHTML=h;
+}
+
+$('ledger').addEventListener('input',e=>{
+  const row=e.target.closest('.lrow[data-i]');if(!row)return;
+  const r=S.rows[+row.dataset.i], f=e.target.dataset.f;
+  if(f==='name')r.name=e.target.value;
+  if(f==='mv')r.mv=Math.max(0,num(e.target.value));
+  if(f==='y')r.y=num(e.target.value);
+  if(f==='ltv')r.ltv=Math.min(100,Math.max(0,num(e.target.value)));
+  if(f==='pa'){const a=Math.min(r.mv,Math.max(0,num(e.target.value)));r.pp=r.mv>0?a/r.mv:0;}
+  update();
+});
+$('ledger').addEventListener('change',e=>{
+  const row=e.target.closest('.lrow[data-i]');if(!row)return;
+  const r=S.rows[+row.dataset.i], f=e.target.dataset.f;
+  if(f==='cat'){r.cat=e.target.value;r.y=CAT[r.cat].y;r.ltv=CAT[r.cat].ltv;renderLedger();}
+  if(f==='src'){r.src=e.target.value;renderLedger();}
+  if(f==='mv')e.target.value=f0(r.mv);
+  if(f==='pa')e.target.value=f0(r.mv*r.pp);
+  update();
+});
+$('ledger').addEventListener('click',e=>{
+  const row=e.target.closest('.lrow[data-i]');if(!row)return;
+  const i=+row.dataset.i, f=e.target.dataset.f;
+  if(f==='del'){S.rows.splice(i,1);renderLedger();update();}
+});
+$('addBtn').onclick=()=>{S.rows.push({name:'新商品',cat:'債券',src:'借款',mv:0,y:CAT['債券'].y,ltv:CAT['債券'].ltv,pp:1});renderLedger();update();
+  const ins=$('ledger').querySelectorAll('input[data-f="mv"]');ins[ins.length-1].focus();};
+$('resetBtn').onclick=()=>{S=SAMPLE();init();};
+
+$('loan').addEventListener('input',()=>{S.loan=Math.max(0,num($('loan').value));update();});
+$('loan').addEventListener('blur',()=>{$('loan').value=f0(S.loan);});
+$('rate').addEventListener('input',()=>{S.rate=num($('rate').value);update();});
+$('stress').addEventListener('input',update);
+
+function update(){
+  const rows=S.rows, L=S.loan, rate=S.rate/100, s=num($('stress').value)/100;
+  let own=0,borrowed=0,mv=0,T=0,V=0,incOwn=0,incB=0,inc=0;
+  const outs=$('ledger').querySelectorAll('.lrow[data-i]');
+  rows.forEach((r,i)=>{
+    const pa=r.mv*r.pp, cap=pa*r.ltv/100, ri=r.mv*r.y/100;
+    mv+=r.mv;inc+=ri;
+    if(r.src==='自有'){own+=r.mv;incOwn+=ri}else{borrowed+=r.mv;incB+=ri}
+    T+=cap;V+=pa;
+    const o=outs[i];if(o){o.querySelector('[data-out="cap"]').textContent=pa>0?f0(cap):'—';o.querySelector('[data-out="pp"]').textContent=r.mv<=0?'':pa>=r.mv-0.5?'全額設質':pa<=0?'未設質':'設質 '+pc(r.pp,0);const pin=o.querySelector('[data-f="pa"]');if(document.activeElement!==pin)pin.value=f0(pa);o.querySelector('[data-out="inc"]').textContent=f0(ri);}
+  });
+  $('totMv').textContent=f0(mv);$('totCap').textContent=f0(T);$('totInc').textContent=f0(inc);
+
+  // margin
+  $('tTxt').textContent=f0(T);
+  const buf=L<=0?1:(T>0?1-L/T:-1);
+  const call=L>0&&T<=L;
+  const lvl=L<=0?'ok':call?'bad':buf<0.15?'warn':'ok';
+  const usage=T>0?L/T:(L>0?Infinity:0);
+  const sDrop=Math.max(0,-s);
+  const unspent=L-borrowed;
+  let note='';
+  if(Math.abs(unspent)>=1) note=unspent>0
+    ?`<div class="warnline">借款尚有 ${f0(unspent)} 未投入任何「借款」來源的商品。</div>`
+    :`<div class="warnline">「借款」來源商品合計 ${f0(borrowed)}，超過借款金額 ${f0(-unspent)}；請確認資金來源設定。</div>`;
+  const usedW=Math.max(0,Math.min(1,usage))*100;
+  const head=L<=0?'尚無借款':call?'已觸發 Margin Call，30 天內須補足':`擔保品跌超過 <b>${pc(buf,1)}</b> 才會被追繳`;
+  $('status').className='status '+lvl;
+  $('status').innerHTML=`
+    <div class="tag big2">${head}</div>
+    <div class="meter"><div class="used ${lvl}" style="width:${usedW.toFixed(1)}%"><span>已借 ${isFinite(usage)?pc(usage,0):'—'}</span></div>
+      <div class="left"><span>${call?'':'還能借 '+pc(Math.max(0,1-usage),0)}</span></div></div>
+    <div class="three">
+      <div><div class="lbl">可借上限</div><div class="v">${f0(T)}</div></div>
+      <div><div class="lbl">已借</div><div class="v">${f0(L)}</div></div>
+      <div><div class="lbl">${call?'需補足':'還能借'}</div><div class="v">${f0(Math.abs(T-L))}</div></div>
+    </div>
+    <div class="hint">可借上限 = 各商品設質金額 × LTV 加總。已借比例越高，擔保品能承受的跌幅越小。</div>
+    ${note}`;
+
+  // yield
+  const oldY=own>0?incOwn/own:0, int=L*rate, net=inc-int, newY=own>0?net/own:0;
+  $('oldY').textContent=pc(oldY);$('newY').textContent=pc(newY);
+  const d=newY-oldY;
+  $('deltaTxt').innerHTML=`淨殖利率${d>=0?'提高':'降低'} <b>${(Math.abs(d)*100).toFixed(2)}</b> 個百分點；年淨收益 <b>${f0(net)}</b>`;
+  $('levTxt').textContent=own>0?(mv/own).toFixed(2)+' 倍':'—';
+  $('monTxt').textContent=f0(net/12);
+  $('ownTxt').textContent=f0(own);
+  const by=borrowed>0?incB/borrowed:0, sp=by-rate;
+  $('spreadTxt').innerHTML=borrowed>0?`<span class="${sp<0?'neg':''}">${(sp*100).toFixed(2)}%</span>`:'—';
+  $('incBody').innerHTML=`
+   <tr><td>自有資金商品配息</td><td>${f0(own)}</td><td>${f0(incOwn)}</td><td>${f0(incOwn/12)}</td></tr>
+   <tr><td>借款買入商品配息</td><td>${f0(borrowed)}</td><td>${f0(incB)}</td><td>${f0(incB/12)}</td></tr>
+   <tr><td>質押借款利息（${S.rate}%）</td><td>${f0(L)}</td><td class="neg">−${f0(int)}</td><td class="neg">−${f0(int/12)}</td></tr>
+   <tr class="total"><td>淨收益</td><td>${f0(own)}</td><td>${f0(net)}</td><td>${f0(net/12)}</td></tr>`;
+
+  // stress
+  const k=1+s, Ts=T*k, Vs=V*k, us=Ts>0?L/Ts:(L>0?Infinity:0);
+  const cure=L>0&&Ts<=L?L-Ts:0, wLtv=V>0?T/V:0;
+  $('stressTxt').textContent=(s>0?'+':'')+(s*100).toFixed(0)+'%';
+  $('sV').textContent=f0(Vs);$('sT').textContent=f0(Ts);
+  $('sU').innerHTML=`<span class="${us>=1?'neg':''}">${isFinite(us)?pc(us,1):'—'}</span>`;
+  $('sC').innerHTML=cure>0?`<span class="neg">${f0(cure)}</span>`:'0';
+  $('sC2').innerHTML=cure>0&&wLtv>0?`<span class="neg">${f0(cure/wLtv)}</span>`:'0';
+  save();
+}
+
+function init(){$('loan').value=f0(S.loan);$('rate').value=S.rate;renderLedger();update();}
+init();
+</script>
+</body>
+</html>
