@@ -45,6 +45,7 @@ button{font:inherit;cursor:pointer}
 .btn{border:1px solid var(--gold);background:transparent;color:var(--gold);border-radius:999px;padding:7px 16px;font-size:13px;font-weight:600}
 .btn.solid{background:var(--band);color:var(--band-ink);border-color:var(--band)}
 .btn.ghost{border-color:var(--line);color:var(--muted);font-weight:400}
+.printbtn{margin-top:8px;border-color:var(--gold-hi);color:var(--band-ink)}
 
 /* ledger */
 .ledger{display:grid;gap:0}
@@ -160,7 +161,7 @@ input[type=range]{accent-color:var(--gold-hi);padding:0;border:0;background:tran
 .disc{font-size:12px;color:var(--muted);line-height:1.7}
 .disc h2{font-size:15px}
 .disc ol{margin:0;padding-left:20px;display:grid;gap:4px}
-@media print{input[type=range],.ledger-actions,.del{display:none}section{break-inside:avoid}header.band{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+@media print{input[type=range],.ledger-actions,.del,.printbtn{display:none}section{break-inside:avoid}header.band{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
 @media (prefers-reduced-motion:no-preference){.gfill,.gmark{transition:all .25s ease}}
 </style>
 </head>
@@ -171,7 +172,7 @@ input[type=range]{accent-color:var(--gold-hi);padding:0;border:0;background:tran
     <div class="eyebrow">Premium Banking · Lombard Lending</div>
     <h1>質押槓桿試算</h1>
   </div>
-  <div class="note">多重商品質押 · 新舊殖利率換算 · 幣別 TWD</div>
+  <div class="note">多重商品質押 · 新舊殖利率換算 · 幣別 TWD<br><button type="button" class="btn printbtn" onclick="window.print()">列印 / 匯出 PDF</button></div>
 </div></header>
 
 <main class="wrap">

@@ -131,6 +131,18 @@
   .warn{display:none; background:#FBF3F1; color:var(--red); border:1px solid #E8CFC9;
     border-radius:10px; padding:10px 14px; font-size:13px; margin-top:14px; font-weight:700;}
 
+  .printbtn{margin-top:14px; border:1px solid var(--gold); background:transparent; color:var(--goldl);
+    border-radius:999px; padding:7px 18px; font:inherit; font-size:13px; font-weight:700; cursor:pointer;}
+  .printbtn:hover{background:rgba(199,162,75,.15);}
+  @media print{
+    body{background:#fff;}
+    header.top,.hero,.hero-right{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    .printbtn,input[type=range]{display:none !important;}
+    .hero{margin-top:12px; box-shadow:none; break-inside:avoid;}
+    section,.card{break-inside:avoid;}
+    @page{size:A4; margin:12mm;}
+  }
+
   @media (max-width:820px){
     .hero{grid-template-columns:1fr; gap:18px;}
     .grid{grid-template-columns:1fr;}
@@ -144,6 +156,7 @@
     <div class="eyebrow">渣打亞灣貴賓理財 ‧ 投資質借試算</div>
     <h1>他行票面要贏，<span class="accent">得高過多少？</span></h1>
     <p class="sub">在渣打加「一層」投資質借槓桿後，同一筆資金的實拿會被墊高。調整下方條件，即時看出他行 FCN 票面必須高到哪裡，才追得上渣打。</p>
+    <button type="button" class="printbtn" onclick="window.print()">列印 / 匯出 PDF</button>
   </div>
 </header>
 
