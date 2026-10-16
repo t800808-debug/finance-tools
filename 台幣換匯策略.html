@@ -124,7 +124,7 @@ footer p{font-size:.8rem}
     <div class="fld"><label for="m_cbc">台灣央行利率 %</label><input id="m_cbc" type="number" step="0.125" min="0" max="10" value="2.000" inputmode="decimal"></div>
     <div class="fld"><label for="m_boj">日本央行利率 %</label><input id="m_boj" type="number" step="0.05" min="-1" max="10" value="1.25" inputmode="decimal"></div>
   </div>
-  <div class="mkt-foot"><span class="meta">聯準會利率請輸入區間中間值，例如 3.75–4.00% 輸入 3.875。避險成本會自動帶入台美利差，也可以在下方試算裡另外調整。</span><button id="m_reset" type="button">恢復預設值</button></div>
+  <div class="mkt-foot"><span class="meta">聯準會利率請輸入區間中間值，例如 3.75–4.00% 輸入 3.875。</span><button id="m_reset" type="button">恢復預設值</button></div>
 </section>
 
 <!-- 1 現況 -->
@@ -190,14 +190,13 @@ footer p{font-size:.8rem}
 
 <!-- 4 試算 -->
 <section>
-  <div class="sec-h"><div class="eyebrow">04 · 自己拉拉看</div><h2>同樣 1,000 萬台幣，<em>五種做法一年後的結果</em></h2>
+  <div class="sec-h"><div class="eyebrow">04 · 自己拉拉看</div><h2>同樣 1,000 萬台幣，<em>四種做法一年後的結果</em></h2>
   <p>拖動拉霸，設定一年後的匯率，下表會換算成台幣計的結果。利率預設為示意值，請依當時銀行報價調整。</p></div>
   <div class="panel ctrls">
     <div class="ctrl"><label for="s1">一年後 1 美元換多少台幣 <input class="nb" id="s1n" type="number" step="0.01" aria-label="一年後美元兌台幣"></label><input id="s1" type="range" min="24" max="40" step="0.01" value="31.5"><div class="ends"><span id="s1lo"></span><span>現在 <span data-t="usd2"></span></span><span id="s1hi"></span></div></div>
     <div class="ctrl"><label for="j1">一年後 1 日圓換多少台幣 <input class="nb" id="j1n" type="number" step="0.001" aria-label="一年後日圓兌台幣"></label><input id="j1" type="range" min="0.14" max="0.3" step="0.001" value="0.21"><div class="ends"><span id="j1lo"></span><span>現在 <span data-t="jpy"></span></span><span id="j1hi"></span></div></div>
     <div class="ctrl"><label for="y">美元債券年利率 % <input class="nb" id="yn" type="number" step="0.1" aria-label="美元債券年利率"></label><input id="y" type="range" min="0" max="10" step="0.05" value="5.0"></div>
     <div class="ctrl"><label for="rb">台幣質借利率 % <input class="nb" id="rbn" type="number" step="0.05" aria-label="台幣質借利率"></label><input id="rb" type="range" min="0.5" max="8" step="0.05" value="2.6"></div>
-    <div class="ctrl"><label for="h">避險成本 %（約等於台美利差） <input class="nb" id="hn" type="number" step="0.05" aria-label="避險成本"></label><input id="h" type="range" min="-2" max="6" step="0.05" value="1.875"></div>
     <div class="ctrl"><label for="d">台幣一年定存利率 % <input class="nb" id="dn" type="number" step="0.05" aria-label="台幣定存利率"></label><input id="d" type="range" min="0" max="5" step="0.05" value="1.7"></div>
     <div class="ctrl"><label for="rj">日圓配息商品年配息率 % <input class="nb" id="rjn" type="number" step="0.05" aria-label="日圓配息商品年配息率"></label><input id="rj" type="range" min="0" max="10" step="0.05" value="2"></div>
   </div>
@@ -209,7 +208,6 @@ footer p{font-size:.8rem}
 <section>
   <div class="sec-h"><div class="eyebrow">05 · 我們的建議</div><h2>不在高點<em>一次換足</em>，用工具代替猜測</h2></div>
   <div class="recs">
-    <div class="rec"><span class="tag">要美元利息</span><div><b>不想賭匯率：選台幣避險的美元債券</b><p>直接賺美元債券的利息，匯率風險由避險處理掉。扣掉避險成本後，年收益仍有機會高於台幣定存，而且不用決定「什麼時候換」。</p></div></div>
     <div class="rec"><span class="tag">想換美元</span><div><b>嫌貴：分批換，或用雙元貨幣「等便宜」</b><p>先設好幾個承接價，例如 <span class="num" data-t="lad"></span>，到價才換。雙元貨幣（DCI）則是在等待期間先收一筆較高的利息，到期時若美元跌破約定價，就用那個比較便宜的價格換成美元；沒跌到，就領回台幣加利息。</p></div></div>
     <div class="rec"><span class="tag">要周轉</span><div><b>用台幣質借，不要賣資產</b><p>台幣借款成本低，適合短期資金需求。<span class="warn">但不建議借台幣去換現在的高價美元</span>：只要一年後美元跌回約 <span class="num" id="beRb">31.5</span>，利息差就被匯損吃光了。</p></div></div>
     <div class="rec"><span class="tag">分散</span><div><b>日圓：便宜的貨幣，小部位分批布局</b><p>日圓兌台幣在數十年來的低檔，日本央行正在升息，美元兌日圓也逼近日本政府過去出手干預的區間；市場恐慌時，日圓也常被當成避風港。可以透過日圓計價的配息商品（例如日圓計價債券或債券型基金）布局，一邊等日圓回升、一邊領配息。缺點是美國若持續升息，日圓還可能更弱，而且配息商品本身也有價格波動，所以只放小部位、分批進場。</p></div></div>
@@ -218,17 +216,15 @@ footer p{font-size:.8rem}
 
   <div class="panel" style="display:flex;flex-direction:column;gap:12px">
     <h3>示意：一筆「原本打算換美元」的台幣資金，可以這樣分</h3>
-    <div class="alloc" role="img" aria-label="避險美元債 40%，分批或雙元貨幣 30%，日圓 20%，保留台幣 10%">
-      <span style="width:40%;background:var(--gold)">40%</span>
-      <span style="width:30%;background:var(--gold-soft)">30%</span>
+    <div class="alloc" role="img" aria-label="分批換匯或雙元貨幣 60%，日圓配息商品 20%，保留台幣 20%">
+      <span style="width:60%;background:var(--gold)">60%</span>
       <span style="width:20%;background:#9fb6d9">20%</span>
-      <span style="width:10%;background:#6f7f99;color:var(--ink)">10%</span>
+      <span style="width:20%;background:#6f7f99;color:var(--ink)">20%</span>
     </div>
     <div class="legend">
-      <div><i style="background:var(--gold)"></i><span><strong>40%</strong> 台幣避險美元債：先賺利息，不賭匯率</span></div>
-      <div><i style="background:var(--gold-soft)"></i><span><strong>30%</strong> 分批換匯或雙元貨幣：等美元回落再進場</span></div>
-      <div><i style="background:#9fb6d9"></i><span><strong>20%</strong> 日圓：分 3 到 4 次買進</span></div>
-      <div><i style="background:#6f7f99"></i><span><strong>10%</strong> 保留台幣，加上質借額度備用</span></div>
+      <div><i style="background:var(--gold)"></i><span><strong>60%</strong> 分批換匯或雙元貨幣：等美元回落再進場</span></div>
+      <div><i style="background:#9fb6d9"></i><span><strong>20%</strong> 日圓配息商品：分 3 到 4 次買進</span></div>
+      <div><i style="background:#6f7f99"></i><span><strong>20%</strong> 保留台幣，加上質借額度備用</span></div>
     </div>
     <p class="meta">比例僅為示意，實際配置須依您的資金用途、需要用錢的時間、既有美元部位與風險承受度調整。</p>
   </div>
@@ -240,7 +236,6 @@ footer p{font-size:.8rem}
   <ul class="clean">
     <li><strong>美元可能更貴</strong>：聯準會若持續升息、外資持續賣台股，美元兌台幣有機會突破 33 元甚至更高。分批換的人，第一批可能不是最便宜的價格。</li>
     <li><strong>日圓可能更便宜</strong>：日美利差仍大，日圓並沒有保證會回升，買進後可能還要等一段時間。</li>
-    <li><strong>避險成本會變</strong>：台美利差擴大，避險成本就跟著上升，避險後的收益可能縮水。</li>
     <li><strong>日圓配息商品的配息不等於報酬</strong>：配息率可能調整，部分配息可能來自本金；商品淨值也會隨日本利率變動，試算未計入價格波動。</li>
     <li><strong>雙元貨幣不保本</strong>：到期可能被換成較弱的那個貨幣，換完後該貨幣還可能繼續走貶。</li>
     <li><strong>質借有追繳風險</strong>：擔保品跌價時，銀行可能要求補足擔保或處分擔保品；利率也可能調整。</li>
@@ -258,31 +253,30 @@ footer p{font-size:.8rem}
 <script>
 const $=s=>document.querySelector(s);
 const MKT_DEF={date:'2026/10/15',usd:32.265,jpy:0.2000,ausd:31.42,ajpy:0.2856,fed:3.875,cbc:2.000,boj:1.25};
-const P_DEF={s1:31.5,j1:0.21,y:5.0,rb:2.6,h:1.875,d:1.7,rj:2.0};
+const P_DEF={s1:31.5,j1:0.21,y:5.0,rb:2.6,d:1.7,rj:2.0};
 const GU={lo:27.6,loT:'2021 台幣最強',hi:33.2,hiT:'2025 年 4 月'}, GJ={lo:0.195,loT:'近年低點',hi:0.31,hiT:'2016'};
 const BASE=1000;
 let M={...MKT_DEF}, P={...P_DEF};
-try{const m=JSON.parse(localStorage.getItem('twdfx_mkt2')||'null');if(m)M={...M,...m};const q=JSON.parse(localStorage.getItem('twdfx_p2')||'null');if(q)P={...P,...q};}catch(e){}
-const save=()=>{try{localStorage.setItem('twdfx_mkt2',JSON.stringify(M));localStorage.setItem('twdfx_p2',JSON.stringify(P))}catch(e){}};
+try{const m=JSON.parse(localStorage.getItem('twdfx_mkt2')||'null');if(m)M={...M,...m};const q=JSON.parse(localStorage.getItem('twdfx_p3')||'null');if(q)P={...P,...q};}catch(e){}
+const save=()=>{try{localStorage.setItem('twdfx_mkt2',JSON.stringify(M));localStorage.setItem('twdfx_p3',JSON.stringify(P))}catch(e){}};
 const num=v=>{const x=parseFloat(v);return isFinite(x)?x:null};
 const fmtW=v=>(v>=0?'+':'−')+Math.abs(v).toFixed(1)+' 萬';
 const fmtP=v=>(v>=0?'+':'−')+Math.abs(v).toFixed(1)+'%';
 const cls=v=>v>=0?'pos':'neg';
 const pct=v=>(+v).toFixed(v%1===0?2:(String(v).split('.')[1]||'').length>2?3:2)+'%';
-const DEC={s1:2,j1:3,y:2,rb:2,h:3,d:2,rj:2};
+const DEC={s1:2,j1:3,y:2,rb:2,d:2,rj:2};
 
 // 今日行情輸入
 const mIds={date:'m_date',usd:'m_usd',jpy:'m_jpy',ausd:'m_ausd',ajpy:'m_ajpy',fed:'m_fed',cbc:'m_cbc',boj:'m_boj'};
 function fillMkt(){for(const k in mIds)$('#'+mIds[k]).value=M[k]}
 for(const k in mIds){$('#'+mIds[k]).addEventListener('input',e=>{
   if(k==='date'){M.date=e.target.value}else{const v=num(e.target.value);if(v===null||v<=0&&k!=='boj'&&k!=='fed'&&k!=='cbc')return;M[k]=v;}
-  if(k==='fed'||k==='cbc'){P.h=+(M.fed-M.cbc).toFixed(3)}
   if(k==='usd'){P.s1=+(M.usd*0.975).toFixed(2)} if(k==='jpy'){P.j1=+(M.jpy*1.05).toFixed(4)}
   render();})}
 $('#m_reset').addEventListener('click',()=>{M={...MKT_DEF};P={...P_DEF};fillMkt();render()});
 
 // 試算參數：拉霸與數字框同步
-['s1','j1','y','rb','h','d','rj'].forEach(id=>{
+['s1','j1','y','rb','d','rj'].forEach(id=>{
   $('#'+id).addEventListener('input',e=>{P[id]=+e.target.value;render('slider',id)});
   $('#'+id+'n').addEventListener('input',e=>{const v=num(e.target.value);if(v===null)return;P[id]=v;render('box',id)});
 });
@@ -317,11 +311,10 @@ function render(src,id){
   $('#s1lo').textContent=sl.min;$('#s1hi').textContent=sl.max;$('#j1lo').textContent=jl.min;$('#j1hi').textContent=jl.max;
   for(const k in P){const s=$('#'+k),b=$('#'+k+'n');if(!(src==='slider'&&id===k))s.value=P[k];if(!(src==='box'&&id===k))b.value=(+P[k]).toFixed(DEC[k]);}
   // 試算
-  const y=P.y/100,rb=P.rb/100,h=P.h/100,d=P.d/100,rj=P.rj/100,fx=P.s1/S0,jx=P.j1/J0;
+  const y=P.y/100,rb=P.rb/100,d=P.d/100,rj=P.rj/100,fx=P.s1/S0,jx=P.j1/J0;
   const rows=[
     ['台幣定存','不動，最穩',d,'—'],
     ['直接換美元買美元債','承擔全部匯率風險',(1+y)*fx-1,'美元跌破 '+(S0*(1+d)/(1+y)).toFixed(2)+' 就輸給定存'],
-    ['台幣避險美元債','賺美元利息、不賭匯率',y-h,'與匯率無關'],
     ['台幣質借 1,000 萬買美元債','自己的資產不動，全靠借款',(1+y)*fx-1-rb,'美元跌破 '+(S0*(1+rb)/(1+y)).toFixed(2)+' 就開始虧'],
     ['日圓配息商品','領日圓配息，等日圓回升',(1+rj)*jx-1,'日圓跌破 '+(J0*(1+d)/(1+rj)).toFixed(4)+' 就輸給定存'],
   ];
