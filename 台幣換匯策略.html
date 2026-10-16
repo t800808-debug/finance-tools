@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>台幣換匯策略</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700;900&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: single-column client report on navy, gold section rules; gauges, calculator, and recommendation blocks stack at phone width */
+:root{
+  --navy:#0e1f3d; --navy-2:#15294d; --ink:#f3efe4; --muted:#a9b4c8; --gold:#c9a24a; --gold-soft:#e6cf93;
+  --up:#6fbf9a; --down:#e08a7a; --line:rgba(201,162,74,.32); --panel:rgba(255,255,255,.04);
+  --f-display:"Noto Serif TC","Songti TC",serif; --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif; --f-num:"IBM Plex Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+body{background:var(--navy);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.75}
+.wrap{max-width:920px;margin:0 auto;padding-inline:clamp(16px,5vw,48px);padding-block:40px 80px;display:flex;flex-direction:column;gap:56px}
+header{display:flex;flex-direction:column;gap:16px;padding-bottom:28px;border-bottom:1px solid var(--line)}
+.eyebrow{font-size:.78rem;letter-spacing:.2em;color:var(--gold)}
+h1,h2,h3{font-family:var(--f-display);margin:0;line-height:1.35;text-wrap:balance}
+h1{font-size:clamp(2rem,6vw,3.2rem);font-weight:900}
+h1 em,h2 em{font-style:normal;color:var(--gold)}
+h2{font-size:clamp(1.35rem,3.2vw,1.9rem)}
+h3{font-size:1.1rem;color:var(--gold-soft)}
+p{margin:0;max-width:66ch;color:var(--muted)}
+p strong,li strong{color:var(--ink)}
+section{display:flex;flex-direction:column;gap:18px}
+.sec-h{display:flex;flex-direction:column;gap:6px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.meta{font-size:.82rem;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+.tile{border-top:1px solid var(--gold);padding-top:10px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile .v{font-family:var(--f-num);font-size:clamp(1.5rem,4vw,2rem);color:var(--gold-soft)}
+.tile .k{font-size:.88rem;color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:18px}
+.gauge{display:flex;flex-direction:column;gap:8px}
+.gauge .t{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.gauge .t b{color:var(--ink)}
+.bar{position:relative;height:12px;border-radius:6px;background:linear-gradient(90deg,var(--up),rgba(255,255,255,.12) 50%,var(--down))}
+.bar.jpy{background:linear-gradient(90deg,var(--down),rgba(255,255,255,.12) 50%,var(--up))}
+.bar i{position:absolute;top:-6px;width:4px;height:24px;background:var(--gold-soft);border-radius:2px;transform:translateX(-2px)}
+.ends{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);font-family:var(--f-num)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.two>*{min-width:0}
+.side{border:1px solid var(--line);border-radius:4px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.side h3{display:flex;align-items:center;gap:8px}
+.side.dn h3::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--down)}
+.side.up h3::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--up)}
+ul.clean{margin:0;padding-left:1.1em;color:var(--muted);display:grid;gap:6px}
+.callout{border-left:3px solid var(--gold);padding:6px 0 6px 16px;font-family:var(--f-display);font-size:clamp(1.05rem,2.4vw,1.3rem);color:var(--ink);max-width:58ch}
+.ctrls{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px 28px}
+.ctrl{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ctrl label{font-size:.88rem;color:var(--ink);display:flex;justify-content:space-between;gap:8px}
+.ctrl label b{font-family:var(--f-num);color:var(--gold-soft);font-weight:600}
+input[type=range]{accent-color:var(--gold);width:100%;height:28px}
+input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:.93rem}
+th,td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08);text-align:right;vertical-align:top}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:500;color:var(--muted);font-size:.84rem}
+td{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+td:first-child{font-family:var(--f-body)}
+td small{display:block;color:var(--muted);font-family:var(--f-body);font-size:.78rem}
+td.pos{color:var(--up)} td.neg{color:var(--down)}
+tr.best td{background:rgba(201,162,74,.1)}
+.recs{display:grid;gap:14px;counter-reset:r}
+.rec{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;padding:16px;border:1px solid var(--line);border-radius:4px}
+.rec .tag{font-size:.78rem;font-weight:700;color:var(--navy);background:var(--gold);padding:2px 8px;border-radius:2px;white-space:nowrap;margin-top:3px}
+.rec>div{min-width:0;display:flex;flex-direction:column;gap:4px}
+.rec b{color:var(--ink)}
+.rec p{font-size:.95rem}
+.alloc{display:flex;height:34px;border-radius:4px;overflow:hidden;font-size:.8rem;font-weight:700;color:var(--navy)}
+.alloc span{display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px 20px;font-size:.9rem;color:var(--muted)}
+.legend div{display:flex;gap:8px;align-items:baseline;min-width:0}
+.legend i{width:10px;height:10px;border-radius:2px;flex:none;transform:translateY(1px)}
+.warn{color:var(--down)}
+.bar b.avg{position:absolute;top:-4px;width:0;height:20px;border-left:2px dashed var(--ink);opacity:.85}
+.avgline{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline;font-size:.92rem;color:var(--ink)}
+.avgline .k{display:inline-flex;align-items:center;gap:6px;color:var(--muted)}
+.avgline .k::before{content:"";width:0;height:12px;border-left:2px dashed var(--ink)}
+.avgline strong{font-family:var(--f-num);color:var(--gold-soft)}
+.avgline .pos{color:var(--up)} .avgline .neg{color:var(--down)}
+.mkt{display:flex;flex-direction:column;gap:14px;border-color:var(--gold)}
+.mkt-h{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline}
+.mkt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px 16px}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fld label{font-size:.82rem;color:var(--muted)}
+.fld input,.nb{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:3px;color:var(--gold-soft);font-family:var(--f-num);font-size:1.05rem;padding:8px 10px;width:100%;min-width:0}
+.nb{width:6.5em;flex:none;font-size:.95rem;padding:3px 6px;text-align:right}
+.fld input:focus,.nb:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:var(--gold)}
+.ctrl label{align-items:center}
+.mkt-foot{display:flex;flex-wrap:wrap;gap:10px 16px;justify-content:space-between;align-items:center}
+.mkt-foot .meta{flex:1 1 300px}
+.mkt-foot button{background:transparent;border:1px solid var(--line);color:var(--gold-soft);font:inherit;font-size:.85rem;padding:6px 14px;border-radius:3px;cursor:pointer}
+.mkt-foot button:hover{border-color:var(--gold)}
+.mkt-foot button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+footer{border-top:1px solid var(--line);padding-top:20px;display:flex;flex-direction:column;gap:10px}
+footer p{font-size:.8rem}
+</style>
+<style>*{box-sizing:border-box}body{margin:0}</style>
+</head>
+<body>
+
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">外匯配置 · 客戶說明 · 2026 年 10 月</div>
+  <h1>手握台幣，<br>美元貴的時候<em>怎麼辦</em></h1>
+  <p>截至 <span class="num" data-t="date"></span>，1 美元可換 <strong class="num" data-t="usd"></strong> 台幣。很多客戶想換美元，又覺得「現在換太貴」。這份說明整理三件事：<strong>台幣為什麼現在弱、手上有台幣其實有哪些優勢，以及不用硬著頭皮在高點換美元的幾種做法。</strong></p>
+</header>
+
+<section class="panel mkt" aria-labelledby="mktH">
+  <div class="mkt-h"><h3 id="mktH">今日行情</h3><span class="meta">輸入最新報價，整份報告的數字與試算會跟著更新</span></div>
+  <div class="mkt-grid">
+    <div class="fld"><label for="m_date">資料日期</label><input id="m_date" type="text" value="2026/10/15"></div>
+    <div class="fld"><label for="m_usd">1 美元兌台幣</label><input id="m_usd" type="number" step="0.001" min="20" max="45" value="32.265" inputmode="decimal"></div>
+    <div class="fld"><label for="m_jpy">1 日圓兌台幣</label><input id="m_jpy" type="number" step="0.0001" min="0.1" max="0.5" value="0.2000" inputmode="decimal"></div>
+    <div class="fld"><label for="m_ausd">美元兌台幣 25 年均價</label><input id="m_ausd" type="number" step="0.01" min="20" max="45" value="31.42" inputmode="decimal"></div>
+    <div class="fld"><label for="m_ajpy">日圓兌台幣 25 年均價</label><input id="m_ajpy" type="number" step="0.0001" min="0.1" max="0.5" value="0.2856" inputmode="decimal"></div>
+    <div class="fld"><label for="m_fed">美國聯準會利率 %</label><input id="m_fed" type="number" step="0.05" min="0" max="10" value="3.875" inputmode="decimal"></div>
+    <div class="fld"><label for="m_cbc">台灣央行利率 %</label><input id="m_cbc" type="number" step="0.125" min="0" max="10" value="2.000" inputmode="decimal"></div>
+    <div class="fld"><label for="m_boj">日本央行利率 %</label><input id="m_boj" type="number" step="0.05" min="-1" max="10" value="1.25" inputmode="decimal"></div>
+  </div>
+  <div class="mkt-foot"><span class="meta">聯準會利率請輸入區間中間值，例如 3.75–4.00% 輸入 3.875。避險成本會自動帶入台美利差，也可以在下方試算裡另外調整。</span><button id="m_reset" type="button">恢復預設值</button></div>
+</section>
+
+<!-- 1 現況 -->
+<section>
+  <div class="sec-h"><div class="eyebrow">01 · 現在的位置</div><h2>美元兌台幣在近 10 年的<em>偏高區</em>，日圓則在<em>偏低區</em></h2></div>
+  <div class="panel gauge">
+    <div class="t"><b>美元兌台幣（1 美元換多少台幣）</b><span class="num" style="color:var(--gold-soft)">現在 <span data-t="usd2"></span></span></div>
+    <div class="bar"><b class="avg" id="a_usd"></b><i id="g_usd"></i></div>
+    <div class="ends"><span>約 27.6（2021 台幣最強）</span><span>約 33.2（2025 年 4 月）</span></div>
+    <div class="avgline" id="avg_usd_txt"></div>
+    <p class="meta">越靠右代表美元越貴。<span id="g_usd_txt"></span></p>
+  </div>
+  <div class="panel gauge">
+    <div class="t"><b>日圓兌台幣（1 日圓換多少台幣）</b><span class="num" style="color:var(--gold-soft)">現在 <span data-t="jpy"></span></span></div>
+    <div class="bar jpy"><b class="avg" id="a_jpy"></b><i id="g_jpy"></i></div>
+    <div class="ends"><span>約 0.195（近年低點）</span><span>約 0.31（2016）</span></div>
+    <div class="avgline" id="avg_jpy_txt"></div>
+    <p class="meta">越靠左代表日圓越便宜。<span id="g_jpy_txt"></span></p>
+  </div>
+  <div class="tiles">
+    <div class="tile"><span class="v num" data-t="fed"></span><span class="k">美國聯準會利率</span></div>
+    <div class="tile"><span class="v num" data-t="cbc"></span><span class="k">台灣央行利率</span></div>
+    <div class="tile"><span class="v num" data-t="boj"></span><span class="k">日本央行利率</span></div>
+    <div class="tile"><span class="v num" data-t="spread"></span><span class="k">台美利差（放美元每年多拿的利息）</span></div>
+  </div>
+  <p class="meta">25 年均價依美國聯準會 FRED 公布的 2001–2025 年年平均匯率計算：美元兌台幣 31.42；日圓兌台幣 0.2856，由美元兌台幣與美元兌日圓交叉換算。區間端點為約略值，供判斷相對位置用，可在上方「今日行情」修改；實際報價以銀行牌告為準。</p>
+</section>
+
+<!-- 2 為什麼台幣弱 -->
+<section>
+  <div class="sec-h"><div class="eyebrow">02 · 為什麼台幣現在弱</div><h2>短期看利率，<em>長期看政治</em></h2></div>
+  <div class="two">
+    <div class="side dn"><h3>壓著台幣的短期力量</h3>
+      <ul class="clean">
+        <li><strong>美國又開始升息</strong>：聯準會 9 月升息一碼，還暗示年底前可能再升。美元存款利息變高，錢自然往美元跑。</li>
+        <li><strong>台美利差拉大</strong>：美國約 <span class="num" data-t="fed"></span>、台灣 <span class="num" data-t="cbc"></span>，放美元每年多約 <span class="num" data-t="spread"></span> 利息。</li>
+        <li><strong>外資賣台股</strong>：10 月 15 日外資賣超創紀錄，賣完換回美元匯出，台幣就跟著貶。</li>
+        <li><strong>中東局勢推高油價</strong>：市場避險時，美元通常比較吃香。</li>
+      </ul>
+    </div>
+    <div class="side up"><h3>撐著台幣的長期力量</h3>
+      <ul class="clean">
+        <li><strong>共和黨政府偏好弱美元</strong>：川普一再表態，希望美元弱一點來幫助美國出口與製造業。</li>
+        <li><strong>台灣對美順差很大</strong>：美國財政部長期把台灣列在匯率觀察名單上，談判時常被要求讓台幣升值。</li>
+        <li><strong>2025 年有前例</strong>：去年 5 月，市場傳出匯率被納入貿易談判，台幣短短幾天就從 32 元附近急升到 29 元多，是約 40 年來最猛的升幅。</li>
+        <li><strong>壽險業的連鎖反應</strong>：台灣壽險業持有大量美元資產，台幣一升就得拋美元避險，升值會被放大。</li>
+      </ul>
+    </div>
+  </div>
+  <p class="callout">換句話說：短期內美元可能還會更強，但美元貴的時候換，萬一政治因素讓台幣突然升，回檔可能來得又快又急。</p>
+  <p class="meta">「共和黨執政美元偏弱」是過去 30 年觀察到的傾向，樣本很少，而且主要還是受聯準會利率影響，不能當成必然。11 月 3 日美國期中選舉只改選國會，川普任期到 2029 年 1 月。</p>
+</section>
+
+<!-- 3 台幣的優勢 -->
+<section>
+  <div class="sec-h"><div class="eyebrow">03 · 手上有台幣的優勢</div><h2>台幣是<em>便宜的錢</em>，不急著換</h2></div>
+  <div class="two">
+    <div class="panel"><h3>借錢成本低</h3><p>台灣利率只有美國的一半左右。用股票、債券或保單向銀行質借台幣，利息遠低於借美元。<strong>需要周轉時借台幣，比賣掉資產或高價換美元划算。</strong></p></div>
+    <div class="panel"><h3>站在美元走弱的那一邊</h3><p>如果長期真的照共和黨的方向走、美元偏弱，持有台幣的人不會吃到匯損，未來還能用更好的匯率換美元。</p></div>
+    <div class="panel"><h3>選擇權在自己手上</h3><p>手上是台幣，就可以等美元回落再換，或是換成其他相對便宜的貨幣。已經全部換成美元的人，就沒有這個彈性。</p></div>
+  </div>
+</section>
+
+<!-- 4 試算 -->
+<section>
+  <div class="sec-h"><div class="eyebrow">04 · 自己拉拉看</div><h2>同樣 1,000 萬台幣，<em>五種做法一年後的結果</em></h2>
+  <p>拖動拉霸，設定一年後的匯率，下表會換算成台幣計的結果。利率預設為示意值，請依當時銀行報價調整。</p></div>
+  <div class="panel ctrls">
+    <div class="ctrl"><label for="s1">一年後 1 美元換多少台幣 <input class="nb" id="s1n" type="number" step="0.01" aria-label="一年後美元兌台幣"></label><input id="s1" type="range" min="24" max="40" step="0.01" value="31.5"><div class="ends"><span id="s1lo"></span><span>現在 <span data-t="usd2"></span></span><span id="s1hi"></span></div></div>
+    <div class="ctrl"><label for="j1">一年後 1 日圓換多少台幣 <input class="nb" id="j1n" type="number" step="0.001" aria-label="一年後日圓兌台幣"></label><input id="j1" type="range" min="0.14" max="0.3" step="0.001" value="0.21"><div class="ends"><span id="j1lo"></span><span>現在 <span data-t="jpy"></span></span><span id="j1hi"></span></div></div>
+    <div class="ctrl"><label for="y">美元債券年利率 % <input class="nb" id="yn" type="number" step="0.1" aria-label="美元債券年利率"></label><input id="y" type="range" min="0" max="10" step="0.05" value="5.0"></div>
+    <div class="ctrl"><label for="rb">台幣質借利率 % <input class="nb" id="rbn" type="number" step="0.05" aria-label="台幣質借利率"></label><input id="rb" type="range" min="0.5" max="8" step="0.05" value="2.6"></div>
+    <div class="ctrl"><label for="h">避險成本 %（約等於台美利差） <input class="nb" id="hn" type="number" step="0.05" aria-label="避險成本"></label><input id="h" type="range" min="-2" max="6" step="0.05" value="1.875"></div>
+    <div class="ctrl"><label for="d">台幣一年定存利率 % <input class="nb" id="dn" type="number" step="0.05" aria-label="台幣定存利率"></label><input id="d" type="range" min="0" max="5" step="0.05" value="1.7"></div>
+    <div class="ctrl"><label for="rj">日圓配息商品年配息率 % <input class="nb" id="rjn" type="number" step="0.05" aria-label="日圓配息商品年配息率"></label><input id="rj" type="range" min="0" max="10" step="0.05" value="2"></div>
+  </div>
+  <div class="scroll"><table id="calc"></table></div>
+  <p class="meta">試算只計一年利息與匯率變化，假設債券利率不變、不計手續費與稅。拉霸或右側數字框都可以調整，數字框可輸入超出拉霸範圍的值。</p>
+</section>
+
+<!-- 5 建議 -->
+<section>
+  <div class="sec-h"><div class="eyebrow">05 · 我們的建議</div><h2>不在高點<em>一次換足</em>，用工具代替猜測</h2></div>
+  <div class="recs">
+    <div class="rec"><span class="tag">要美元利息</span><div><b>不想賭匯率：選台幣避險的美元債券</b><p>直接賺美元債券的利息，匯率風險由避險處理掉。扣掉避險成本後，年收益仍有機會高於台幣定存，而且不用決定「什麼時候換」。</p></div></div>
+    <div class="rec"><span class="tag">想換美元</span><div><b>嫌貴：分批換，或用雙元貨幣「等便宜」</b><p>先設好幾個承接價，例如 <span class="num" data-t="lad"></span>，到價才換。雙元貨幣（DCI）則是在等待期間先收一筆較高的利息，到期時若美元跌破約定價，就用那個比較便宜的價格換成美元；沒跌到，就領回台幣加利息。</p></div></div>
+    <div class="rec"><span class="tag">要周轉</span><div><b>用台幣質借，不要賣資產</b><p>台幣借款成本低，適合短期資金需求。<span class="warn">但不建議借台幣去換現在的高價美元</span>：只要一年後美元跌回約 <span class="num" id="beRb">31.5</span>，利息差就被匯損吃光了。</p></div></div>
+    <div class="rec"><span class="tag">分散</span><div><b>日圓：便宜的貨幣，小部位分批布局</b><p>日圓兌台幣在數十年來的低檔，日本央行正在升息，美元兌日圓也逼近日本政府過去出手干預的區間；市場恐慌時，日圓也常被當成避風港。可以透過日圓計價的配息商品（例如日圓計價債券或債券型基金）布局，一邊等日圓回升、一邊領配息。缺點是美國若持續升息，日圓還可能更弱，而且配息商品本身也有價格波動，所以只放小部位、分批進場。</p></div></div>
+    <div class="rec"><span class="tag">其他</span><div><b>歐元、澳幣、黃金：配角</b><p>歐元利率低、價位不算便宜；澳幣跟原物料和中國景氣連動大，波動高；黃金不生利息，但能對沖「各國都靠貶值解決債務」的長期風險，可少量持有。</p></div></div>
+  </div>
+
+  <div class="panel" style="display:flex;flex-direction:column;gap:12px">
+    <h3>示意：一筆「原本打算換美元」的台幣資金，可以這樣分</h3>
+    <div class="alloc" role="img" aria-label="避險美元債 40%，分批或雙元貨幣 30%，日圓 20%，保留台幣 10%">
+      <span style="width:40%;background:var(--gold)">40%</span>
+      <span style="width:30%;background:var(--gold-soft)">30%</span>
+      <span style="width:20%;background:#9fb6d9">20%</span>
+      <span style="width:10%;background:#6f7f99;color:var(--ink)">10%</span>
+    </div>
+    <div class="legend">
+      <div><i style="background:var(--gold)"></i><span><strong>40%</strong> 台幣避險美元債：先賺利息，不賭匯率</span></div>
+      <div><i style="background:var(--gold-soft)"></i><span><strong>30%</strong> 分批換匯或雙元貨幣：等美元回落再進場</span></div>
+      <div><i style="background:#9fb6d9"></i><span><strong>20%</strong> 日圓：分 3 到 4 次買進</span></div>
+      <div><i style="background:#6f7f99"></i><span><strong>10%</strong> 保留台幣，加上質借額度備用</span></div>
+    </div>
+    <p class="meta">比例僅為示意，實際配置須依您的資金用途、需要用錢的時間、既有美元部位與風險承受度調整。</p>
+  </div>
+</section>
+
+<!-- 6 風險 -->
+<section>
+  <div class="sec-h"><div class="eyebrow">06 · 一定要知道的風險</div><h2>這些情況會讓<em>上面的判斷失準</em></h2></div>
+  <ul class="clean">
+    <li><strong>美元可能更貴</strong>：聯準會若持續升息、外資持續賣台股，美元兌台幣有機會突破 33 元甚至更高。分批換的人，第一批可能不是最便宜的價格。</li>
+    <li><strong>日圓可能更便宜</strong>：日美利差仍大，日圓並沒有保證會回升，買進後可能還要等一段時間。</li>
+    <li><strong>避險成本會變</strong>：台美利差擴大，避險成本就跟著上升，避險後的收益可能縮水。</li>
+    <li><strong>日圓配息商品的配息不等於報酬</strong>：配息率可能調整，部分配息可能來自本金；商品淨值也會隨日本利率變動，試算未計入價格波動。</li>
+    <li><strong>雙元貨幣不保本</strong>：到期可能被換成較弱的那個貨幣，換完後該貨幣還可能繼續走貶。</li>
+    <li><strong>質借有追繳風險</strong>：擔保品跌價時，銀行可能要求補足擔保或處分擔保品；利率也可能調整。</li>
+    <li><strong>政治不等於匯率</strong>：政黨傾向只是影響匯率的眾多因素之一，不能取代利率、景氣與資金流向的判斷。</li>
+  </ul>
+</section>
+
+<footer>
+  <p>資料來源：中央銀行（新台幣收盤匯率、理監事會決議）、中央社（2026/10/15 匯市）、美國聯準會（2026/9/16 利率決議）、臺灣銀行牌告匯率、工商時報、科技新報等公開報導。數據截至 2026 年 10 月中旬。</p>
+  <p>本資料僅供教育與一般資訊參考，不構成投資建議、要約或收益保證。外幣投資涉及匯率風險，換回台幣時可能少於原投入本金。雙元貨幣、債券及其他投資商品均有風險，投資前請詳閱產品說明書與風險預告書，並依自身財務狀況審慎評估。</p>
+</footer>
+
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const MKT_DEF={date:'2026/10/15',usd:32.265,jpy:0.2000,ausd:31.42,ajpy:0.2856,fed:3.875,cbc:2.000,boj:1.25};
+const P_DEF={s1:31.5,j1:0.21,y:5.0,rb:2.6,h:1.875,d:1.7,rj:2.0};
+const GU={lo:27.6,loT:'2021 台幣最強',hi:33.2,hiT:'2025 年 4 月'}, GJ={lo:0.195,loT:'近年低點',hi:0.31,hiT:'2016'};
+const BASE=1000;
+let M={...MKT_DEF}, P={...P_DEF};
+try{const m=JSON.parse(localStorage.getItem('twdfx_mkt2')||'null');if(m)M={...M,...m};const q=JSON.parse(localStorage.getItem('twdfx_p2')||'null');if(q)P={...P,...q};}catch(e){}
+const save=()=>{try{localStorage.setItem('twdfx_mkt2',JSON.stringify(M));localStorage.setItem('twdfx_p2',JSON.stringify(P))}catch(e){}};
+const num=v=>{const x=parseFloat(v);return isFinite(x)?x:null};
+const fmtW=v=>(v>=0?'+':'−')+Math.abs(v).toFixed(1)+' 萬';
+const fmtP=v=>(v>=0?'+':'−')+Math.abs(v).toFixed(1)+'%';
+const cls=v=>v>=0?'pos':'neg';
+const pct=v=>(+v).toFixed(v%1===0?2:(String(v).split('.')[1]||'').length>2?3:2)+'%';
+const DEC={s1:2,j1:3,y:2,rb:2,h:3,d:2,rj:2};
+
+// 今日行情輸入
+const mIds={date:'m_date',usd:'m_usd',jpy:'m_jpy',ausd:'m_ausd',ajpy:'m_ajpy',fed:'m_fed',cbc:'m_cbc',boj:'m_boj'};
+function fillMkt(){for(const k in mIds)$('#'+mIds[k]).value=M[k]}
+for(const k in mIds){$('#'+mIds[k]).addEventListener('input',e=>{
+  if(k==='date'){M.date=e.target.value}else{const v=num(e.target.value);if(v===null||v<=0&&k!=='boj'&&k!=='fed'&&k!=='cbc')return;M[k]=v;}
+  if(k==='fed'||k==='cbc'){P.h=+(M.fed-M.cbc).toFixed(3)}
+  if(k==='usd'){P.s1=+(M.usd*0.975).toFixed(2)} if(k==='jpy'){P.j1=+(M.jpy*1.05).toFixed(4)}
+  render();})}
+$('#m_reset').addEventListener('click',()=>{M={...MKT_DEF};P={...P_DEF};fillMkt();render()});
+
+// 試算參數：拉霸與數字框同步
+['s1','j1','y','rb','h','d','rj'].forEach(id=>{
+  $('#'+id).addEventListener('input',e=>{P[id]=+e.target.value;render('slider',id)});
+  $('#'+id+'n').addEventListener('input',e=>{const v=num(e.target.value);if(v===null)return;P[id]=v;render('box',id)});
+});
+
+function gauge(el,txtEl,ends,v,G,kind,avg,avgEl,avgTxt){
+  const lo=Math.min(G.lo,v,avg),hi=Math.max(G.hi,v,avg),r=(v-lo)/(hi-lo);
+  el.style.left=(r*100).toFixed(1)+'%';
+  avgEl.style.left=((avg-lo)/(hi-lo)*100).toFixed(1)+'%';
+  const dp=(v/avg-1)*100,dd=v-avg,dec=kind==='usd'?2:4,unit=kind==='usd'?'美元':'日圓';
+  const word=Math.abs(dp)<0.5?'和均價差不多':(dp>0?'比均價貴':'比均價便宜');
+  const good=kind==='usd'?dp<=0:dp<=0;
+  avgTxt.innerHTML=`<span class="k">25 年均價 <strong>${avg.toFixed(dec)}</strong></span><span>現在${word} <strong class="${good?'pos':'neg'}">${Math.abs(dp).toFixed(1)}%</strong>（每 1 ${unit}${dd>=0?'多':'少'} ${Math.abs(dd).toFixed(dec)} 元台幣）</span>`;
+  ends.children[0].textContent='約 '+(lo===v?v+'（現在）':G.lo+'（'+G.loT+'）');
+  ends.children[1].textContent='約 '+(hi===v?v+'（現在）':G.hi+'（'+G.hiT+'）');
+  if(kind==='usd')txtEl.textContent=r>0.75?'現在接近 10 年區間的上緣，在這裡換美元，等於用相對高的價格買。':r<0.25?'現在接近 10 年區間的下緣，美元相對便宜。':'現在位在 10 年區間的中段。';
+  else txtEl.textContent=r<0.25?'現在接近數十年來的低檔區，日圓相對便宜。':r>0.75?'現在位在區間高檔，日圓已不算便宜。':'現在位在區間中段。';
+}
+
+function render(src,id){
+  const S0=M.usd,J0=M.jpy;
+  // 文字欄位
+  const spread=M.fed-M.cbc;
+  const map={date:M.date,usd:S0.toFixed(3),usd2:S0.toFixed(2),jpy:J0.toFixed(4),fed:pct(M.fed),cbc:pct(M.cbc),boj:pct(M.boj),spread:(spread>=0?'':'−')+Math.abs(spread).toFixed(2)+'%',
+    lad:[0.975,0.96,0.945].map(f=>(S0*f).toFixed(1)).join('、')};
+  document.querySelectorAll('[data-t]').forEach(e=>{e.textContent=map[e.dataset.t]});
+  const ends=document.querySelectorAll('.gauge .ends');
+  gauge($('#g_usd'),$('#g_usd_txt'),ends[0],S0,GU,'usd',M.ausd,$('#a_usd'),$('#avg_usd_txt'));
+  gauge($('#g_jpy'),$('#g_jpy_txt'),ends[1],J0,GJ,'jpy',M.ajpy,$('#a_jpy'),$('#avg_jpy_txt'));
+  // 拉霸範圍隨現價調整
+  const sl=$('#s1'),jl=$('#j1');
+  sl.min=(S0*0.8).toFixed(1);sl.max=(S0*1.2).toFixed(1);jl.min=(J0*0.7).toFixed(3);jl.max=(J0*1.3).toFixed(3);jl.step=(J0/200).toFixed(4);
+  $('#s1lo').textContent=sl.min;$('#s1hi').textContent=sl.max;$('#j1lo').textContent=jl.min;$('#j1hi').textContent=jl.max;
+  for(const k in P){const s=$('#'+k),b=$('#'+k+'n');if(!(src==='slider'&&id===k))s.value=P[k];if(!(src==='box'&&id===k))b.value=(+P[k]).toFixed(DEC[k]);}
+  // 試算
+  const y=P.y/100,rb=P.rb/100,h=P.h/100,d=P.d/100,rj=P.rj/100,fx=P.s1/S0,jx=P.j1/J0;
+  const rows=[
+    ['台幣定存','不動，最穩',d,'—'],
+    ['直接換美元買美元債','承擔全部匯率風險',(1+y)*fx-1,'美元跌破 '+(S0*(1+d)/(1+y)).toFixed(2)+' 就輸給定存'],
+    ['台幣避險美元債','賺美元利息、不賭匯率',y-h,'與匯率無關'],
+    ['台幣質借 1,000 萬買美元債','自己的資產不動，全靠借款',(1+y)*fx-1-rb,'美元跌破 '+(S0*(1+rb)/(1+y)).toFixed(2)+' 就開始虧'],
+    ['日圓配息商品','領日圓配息，等日圓回升',(1+rj)*jx-1,'日圓跌破 '+(J0*(1+d)/(1+rj)).toFixed(4)+' 就輸給定存'],
+  ];
+  const best=Math.max(...rows.map(r=>r[2]));
+  let html='<thead><tr><th>做法</th><th>一年報酬率</th><th>以 1,000 萬計</th><th>關鍵門檻</th></tr></thead><tbody>';
+  rows.forEach(([n,sub,r,be])=>{html+=`<tr class="${r===best?'best':''}"><td>${n}<small>${sub}</small></td><td class="${cls(r)}">${fmtP(r*100)}</td><td class="${cls(r)}">${fmtW(r*BASE)}</td><td style="font-family:var(--f-body);font-size:.85rem;color:var(--muted)">${be}</td></tr>`});
+  $('#calc').innerHTML=html+'</tbody>';
+  $('#beRb').textContent=(S0*(1+rb)/(1+y)).toFixed(2);
+  save();
+}
+fillMkt();render();
+</script>
+
+</body>
+</html>
