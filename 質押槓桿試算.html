@@ -26,7 +26,7 @@
   --seg-a:#4d6fae; --seg-b:#d6b46c; --track:#1b2a46;
   --good:#5fc196; --warn:#e2a64a; --bad:#ec7a7a; --good-bg:#12302a; --warn-bg:#33281a; --bad-bg:#3a1d22; color-scheme:dark}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
 .wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 header.band{background:var(--band);color:var(--band-ink);border-bottom:2px solid var(--gold-hi)}
 header.band .wrap{padding-block:22px 18px;display:flex;flex-wrap:wrap;gap:6px 24px;align-items:flex-end;justify-content:space-between}
@@ -45,11 +45,10 @@ button{font:inherit;cursor:pointer}
 .btn{border:1px solid var(--gold);background:transparent;color:var(--gold);border-radius:999px;padding:7px 16px;font-size:13px;font-weight:600}
 .btn.solid{background:var(--band);color:var(--band-ink);border-color:var(--band)}
 .btn.ghost{border-color:var(--line);color:var(--muted);font-weight:400}
-.printbtn{margin-top:8px;border-color:var(--gold-hi);color:var(--band-ink)}
 
 /* ledger */
 .ledger{display:grid;gap:0}
-.lrow{display:grid;grid-template-columns:minmax(120px,1.6fr) 92px 88px minmax(110px,1.2fr) 74px 70px minmax(110px,1.2fr) minmax(96px,1fr) minmax(90px,1fr) 34px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.lrow{display:grid;grid-template-columns:minmax(120px,1.5fr) 88px 112px minmax(120px,1.3fr) 74px 70px minmax(110px,1.2fr) minmax(96px,1fr) minmax(90px,1fr) 34px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
 .lrow.head{font-size:12px;color:var(--muted);padding-top:0}
 .lrow.head span:nth-child(n+4){text-align:right}
 .lrow .sub{font-size:11px;color:var(--muted);text-align:right;margin-top:2px}
@@ -113,6 +112,24 @@ button{font:inherit;cursor:pointer}
 .meter .left{flex:1;justify-content:flex-end;color:var(--good)}
 .three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .three .v{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:clamp(15px,4vw,20px);font-weight:600}
+.subin{display:grid;gap:2px;margin-top:6px}
+.subin span{font-size:11px;color:var(--muted);white-space:nowrap}
+.pols{display:grid;gap:14px}
+.pcard{border:1px solid var(--line);border-radius:8px;padding:14px;display:grid;gap:12px}
+.ptop{display:flex;gap:8px;align-items:center}
+.pname{font-weight:700;font-size:15px;background:transparent;border-color:transparent;border-bottom:1px solid var(--line);border-radius:0;padding-left:0}
+.pin{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 14px}
+@media (max-width:620px){.pin{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pin label{display:grid;gap:4px;font-size:12px;color:var(--muted);min-width:0}
+.pin output{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:16px;font-weight:600;color:var(--ink);padding:7px 0;text-align:left}
+.pin output.hi{color:var(--gold)}
+.pres{background:var(--gold-soft);border-radius:8px;padding:12px 14px;display:grid;gap:6px;font-size:14px}
+.pres p{margin:0}
+.pflow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px}
+.pflow>div{display:grid}
+.pflow b{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:26px}
+.pflow b.gold{color:var(--gold)}
+.printbtn{margin-top:8px;border-color:var(--gold-hi);color:var(--band-ink)}
 .warnline{font-size:13px;color:var(--warn)}
 
 /* yield */
@@ -164,6 +181,7 @@ input[type=range]{accent-color:var(--gold-hi);padding:0;border:0;background:tran
 @media print{input[type=range],.ledger-actions,.del,.printbtn{display:none}section{break-inside:avoid}header.band{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
 @media (prefers-reduced-motion:no-preference){.gfill,.gmark{transition:all .25s ease}}
 </style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
 
@@ -187,11 +205,17 @@ input[type=range]{accent-color:var(--gold-hi);padding:0;border:0;background:tran
 </section>
 
 <section>
-  <h2>借款與追繳檢核 <small>規則：設質金額 × LTV 合計必須大於借款餘額</small></h2>
+  <h2>保費融資 <small>單獨核貸、無 Margin Call；保單以單利呈現：（解約金 ÷ 保費 − 1）÷ 年數</small></h2>
+  <div id="pols" class="pols"></div>
+  <div class="ledger-actions"><button class="btn" id="addPfBtn" type="button">＋ 新增保費融資保單</button></div>
+</section>
+
+<section>
+  <h2>借款與追繳檢核 <small>規則：設質金額 × LTV 合計必須大於質押借款；保費融資單獨計算</small></h2>
   <div class="loanbar">
-    <div><label class="lbl" for="loan">借款金額</label><input class="n" type="text" id="loan" inputmode="numeric"></div>
     <div><label class="lbl" for="rate">質押借款利率（年）</label><div class="unit"><input class="n" type="number" id="rate" step="0.01"><span>%</span></div></div>
-    <div><span class="lbl">總質借門檻（可借上限）</span><div class="fig"><div class="v" id="tTxt"></div></div></div>
+    <div><label class="lbl" for="rate2">保費融資利率（年）</label><div class="unit"><input class="n" type="number" id="rate2" step="0.01"><span>%</span></div></div>
+    <div><span class="lbl">質押借款合計（不含保費融資）</span><div class="fig"><div class="v" id="loanTot"></div></div></div>
   </div>
   <div class="status" id="status"></div>
 </section>
@@ -218,14 +242,15 @@ input[type=range]{accent-color:var(--gold-hi);padding:0;border:0;background:tran
       <tbody id="incBody"></tbody>
     </table>
   </div>
+  <p class="hint" id="cashNote"></p>
 </section>
 
 <section>
-  <h2>壓力測試 <small>設質擔保品同步漲跌</small></h2>
-  <div style="display:flex;justify-content:space-between;gap:8px"><label class="lbl" for="stress">擔保品市值變動</label><b id="stressTxt" style="font-family:var(--f-num)"></b></div>
+  <h2>壓力測試 <small>基金、股票、債券、結構債同步漲跌；定存、活存不變；保費融資不受影響</small></h2>
+  <div style="display:flex;justify-content:space-between;gap:8px"><label class="lbl" for="stress">市場型擔保品市值變動</label><b id="stressTxt" style="font-family:var(--f-num)"></b></div>
   <input type="range" id="stress" min="-70" max="30" step="1" value="-20" style="width:100%">
   <div class="stressout">
-    <div class="kpi"><div class="lbl">設質擔保品市值</div><div class="v" id="sV"></div></div>
+    <div class="kpi"><div class="lbl">設質擔保品總值</div><div class="v" id="sV"></div></div>
     <div class="kpi"><div class="lbl">質借門檻</div><div class="v" id="sT"></div></div>
     <div class="kpi"><div class="lbl">額度使用率</div><div class="v" id="sU"></div></div>
     <div class="kpi"><div class="lbl">30 天內需還款</div><div class="v" id="sC"></div></div>
@@ -240,35 +265,44 @@ input[type=range]{accent-color:var(--gold-hi);padding:0;border:0;background:tran
     <li>殖利率／配息率非保證，基金配息可能來自本金；保單以宣告利率或保價金計算，亦非保證。</li>
     <li>當設質擔保品市值 × LTV 小於或等於借款餘額即觸發追繳，須於 30 天內還款或補足擔保品，否則銀行得處分擔保品。</li>
     <li>未設質的部分不計入質借門檻，但其市值漲跌仍影響客戶整體淨值。定存、活存設質期間不得自由動用，定存提前解約可能減損利息。</li>
+    <li>保費融資：首年保價金通常低於所繳保費，可借額度以保價金計；保單提前解約可能低於所繳保費。保單單利以預估解約金換算，非保證；保單增值累積於保單、不發放現金，借款利息需另以現金支付。外幣保單另有匯率風險，保價金以台幣換算後的價值會隨匯率變動。</li>
     <li>質押利率多為浮動，利率上升將壓縮利差。本試算假設幣別一致；跨幣別配置另有匯率風險，結構債另有發行機構信用與以股票交割等風險。</li>
   </ol>
 </section>
 </main>
 
 <script>
-const CAT={'基金':{y:8.5,ltv:80},'股票':{y:3.0,ltv:60},'債券':{y:5.0,ltv:70},'結構債':{y:10.0,ltv:50},'保險':{y:4.0,ltv:70},'定存':{y:1.7,ltv:80},'活存':{y:0.5,ltv:80}};
-const SAMPLE=()=>({rate:1.91,loan:20000000,rows:[
+const CAT={'基金':{y:8.5,ltv:80},'股票':{y:3.0,ltv:60},'債券':{y:5.0,ltv:70},'結構債':{y:10.0,ltv:50},'定存':{y:1.7,ltv:80},'活存':{y:0.5,ltv:80}};
+const STABLE={'定存':1,'活存':1};   // 不隨市場漲跌的擔保品（保單另計，亦不隨市場漲跌）
+const SAMPLE=()=>({rate:1.91,rate2:1.91,rows:[
   {name:'聯博美國收益',cat:'基金',src:'自有',mv:30000000,y:8.5,ltv:80,pp:1},
   {name:'聯博美國收益',cat:'基金',src:'借款',mv:20000000,y:8.5,ltv:80,pp:0.5},
-  {name:'台幣定存',cat:'定存',src:'自有',mv:3000000,y:1.7,ltv:80,pp:1}]});
+  {name:'台幣定存',cat:'定存',src:'自有',mv:3000000,y:1.7,ltv:80,pp:1}],
+  pols:[{name:'美元儲蓄保單（示意）',prem:10000000,fin:6000000,cv0:9000000,n:10,cvn:13800000,ltv:70}]});
 let S;
-try{S=JSON.parse(localStorage.getItem('lev-calc-v4'))}catch(e){}
+try{S=JSON.parse(localStorage.getItem('lev-calc-v6'))}catch(e){}
 if(!S||!Array.isArray(S.rows))S=SAMPLE();
-const save=()=>{try{localStorage.setItem('lev-calc-v4',JSON.stringify(S))}catch(e){}};
+if(!Array.isArray(S.pols))S.pols=[];
+const save=()=>{try{localStorage.setItem('lev-calc-v6',JSON.stringify(S))}catch(e){}};
 const $=id=>document.getElementById(id);
 const num=s=>{const v=parseFloat(String(s).replace(/[^\d.\-]/g,''));return isFinite(v)?v:0};
 const f0=n=>Math.round(n).toLocaleString('en-US');
 const pc=(x,d=2)=>(x*100).toFixed(d)+'%';
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const base=r=>r.mv;
+const borrowOf=r=>r.src==='借款'?r.mv:0;
+// 保單單利：(第 N 年解約金 ÷ 保費 − 1) ÷ N
+const polCalc=p=>{const fin=Math.min(p.fin,p.prem), own=p.prem-fin, si=p.prem>0&&p.n>0?(p.cvn/p.prem-1)/p.n:0,
+  gain=p.prem*si, int=fin*(S.rate2??S.rate)/100, net=gain-int, cap=p.cv0*p.ltv/100;
+  return{fin,own,si,gain,int,net,cap,ownSi:own>0?net/own:0,totN:net*p.n};};
 
 function renderLedger(){
-  const L=$('ledger');
   let h=`<div class="lrow head"><span>商品名稱</span><span>類別</span><span>資金來源</span><span>市值</span><span>殖利率%</span><span>LTV%</span><span>設質金額</span><span>可借額度</span><span>年配息</span><span></span></div>`;
   S.rows.forEach((r,i)=>{
-    h+=`<div class="lrow ${r.src==='借款'?'borrow':''}" data-i="${i}">
+    h+=`<div class="lrow ${r.src!=='自有'?'borrow':''}" data-i="${i}">
       <div class="nm"><span class="k">商品名稱</span><input data-f="name" value="${esc(r.name)}" aria-label="商品名稱"></div>
       <div><span class="k">類別</span><select data-f="cat" aria-label="類別">${Object.keys(CAT).map(c=>`<option${c===r.cat?' selected':''}>${c}</option>`).join('')}</select></div>
-      <div><span class="k">資金來源</span><select data-f="src" aria-label="資金來源"><option${r.src==='自有'?' selected':''}>自有</option><option${r.src==='借款'?' selected':''}>借款</option></select></div>
+      <div><span class="k">資金來源</span><select data-f="src" aria-label="資金來源">${['自有','借款'].map(o=>`<option${o===r.src?' selected':''}>${o}</option>`).join('')}</select></div>
       <div><span class="k">市值</span><input class="n" data-f="mv" inputmode="numeric" value="${f0(r.mv)}" aria-label="市值"></div>
       <div><span class="k">殖利率%</span><input class="n" type="number" step="0.1" data-f="y" value="${r.y}" aria-label="殖利率"></div>
       <div><span class="k">LTV%</span><input class="n" type="number" step="5" min="0" max="100" data-f="ltv" value="${r.ltv}" aria-label="LTV"></div>
@@ -279,69 +313,120 @@ function renderLedger(){
     </div>`;
   });
   h+=`<div class="lrow foot"><div class="nm">合計</div><div class="sp"></div><div class="sp"></div><div><span class="k">總市值</span><div class="c" id="totMv"></div></div><div class="sp"></div><div class="sp"></div><div class="sp"></div><div><span class="k">總質借門檻</span><div class="c" id="totCap"></div></div><div><span class="k">總年配息</span><div class="c" id="totInc"></div></div><div class="sp"></div></div>`;
-  L.innerHTML=h;
+  $('ledger').innerHTML=h;
 }
 
+const PF=[['prem','總保費'],['fin','銀行融資'],['cv0','目前保價金（擔保用）'],['cvn','預估解約金'],['n','第幾年'],['ltv','保價金 LTV%']];
+function renderPols(){
+  $('pols').innerHTML=S.pols.length?S.pols.map((p,i)=>`<div class="pcard" data-p="${i}">
+    <div class="ptop"><input class="pname" data-g="name" value="${esc(p.name)}" aria-label="保單名稱"><button type="button" class="del" data-g="del" aria-label="刪除此保單">×</button></div>
+    <div class="pin">
+      <label>總保費<input class="n" data-g="prem" inputmode="numeric" value="${f0(p.prem)}"></label>
+      <label>銀行融資<input class="n" data-g="fin" inputmode="numeric" value="${f0(p.fin)}"></label>
+      <label>客戶自繳<output class="n" data-o="own"></output></label>
+      <label>第幾年<input class="n" type="number" min="1" step="1" data-g="n" value="${p.n}"></label>
+      <label>當年預估解約金<input class="n" data-g="cvn" inputmode="numeric" value="${f0(p.cvn)}"></label>
+      <label>保單單利<output class="n hi" data-o="si"></output></label>
+      <label>目前保價金<input class="n" data-g="cv0" inputmode="numeric" value="${f0(p.cv0)}"></label>
+      <label>保價金 LTV%<input class="n" type="number" step="5" min="0" max="100" data-g="ltv" value="${p.ltv}"></label>
+      <label>可融資上限<output class="n" data-o="cap"></output></label>
+    </div>
+    <div class="pres" data-o="res"></div>
+  </div>`).join(''):'<p class="hint">尚未加入保費融資保單。</p>';
+}
+$('pols').addEventListener('input',e=>{
+  const c=e.target.closest('.pcard');if(!c)return;const p=S.pols[+c.dataset.p],g=e.target.dataset.g;
+  if(g==='name')p.name=e.target.value;else if(g)p[g]=Math.max(0,num(e.target.value));
+  if(g==='ltv')p.ltv=Math.min(100,p.ltv);
+  update();
+});
+$('pols').addEventListener('change',e=>{
+  const c=e.target.closest('.pcard');if(!c)return;const p=S.pols[+c.dataset.p],g=e.target.dataset.g;
+  if(['prem','fin','cv0','cvn'].includes(g))e.target.value=f0(p[g]);
+});
+$('pols').addEventListener('click',e=>{
+  const c=e.target.closest('.pcard');if(!c)return;
+  if(e.target.dataset.g==='del'){S.pols.splice(+c.dataset.p,1);renderPols();update();}
+});
 $('ledger').addEventListener('input',e=>{
   const row=e.target.closest('.lrow[data-i]');if(!row)return;
-  const r=S.rows[+row.dataset.i], f=e.target.dataset.f;
-  if(f==='name')r.name=e.target.value;
-  if(f==='mv')r.mv=Math.max(0,num(e.target.value));
-  if(f==='y')r.y=num(e.target.value);
-  if(f==='ltv')r.ltv=Math.min(100,Math.max(0,num(e.target.value)));
-  if(f==='pa'){const a=Math.min(r.mv,Math.max(0,num(e.target.value)));r.pp=r.mv>0?a/r.mv:0;}
+  const r=S.rows[+row.dataset.i], f=e.target.dataset.f, v=e.target.value;
+  if(f==='name')r.name=v;
+  if(f==='mv')r.mv=Math.max(0,num(v));
+  if(f==='y')r.y=num(v);
+  if(f==='ltv')r.ltv=Math.min(100,Math.max(0,num(v)));
+  if(f==='pa'){const b=base(r),a=Math.min(b,Math.max(0,num(v)));r.pp=b>0?a/b:0;}
   update();
 });
 $('ledger').addEventListener('change',e=>{
   const row=e.target.closest('.lrow[data-i]');if(!row)return;
   const r=S.rows[+row.dataset.i], f=e.target.dataset.f;
-  if(f==='cat'){r.cat=e.target.value;r.y=CAT[r.cat].y;r.ltv=CAT[r.cat].ltv;renderLedger();}
+  if(f==='cat'){r.cat=e.target.value;r.y=CAT[r.cat].y;r.ltv=CAT[r.cat].ltv;
+    renderLedger();}
   if(f==='src'){r.src=e.target.value;renderLedger();}
   if(f==='mv')e.target.value=f0(r.mv);
-  if(f==='pa')e.target.value=f0(r.mv*r.pp);
+  if(f==='pa')e.target.value=f0(base(r)*r.pp);
   update();
 });
 $('ledger').addEventListener('click',e=>{
   const row=e.target.closest('.lrow[data-i]');if(!row)return;
-  const i=+row.dataset.i, f=e.target.dataset.f;
-  if(f==='del'){S.rows.splice(i,1);renderLedger();update();}
+  if(e.target.dataset.f==='del'){S.rows.splice(+row.dataset.i,1);renderLedger();update();}
 });
 $('addBtn').onclick=()=>{S.rows.push({name:'新商品',cat:'債券',src:'借款',mv:0,y:CAT['債券'].y,ltv:CAT['債券'].ltv,pp:1});renderLedger();update();
   const ins=$('ledger').querySelectorAll('input[data-f="mv"]');ins[ins.length-1].focus();};
+$('addPfBtn').onclick=()=>{S.pols.push({name:'保費融資保單',prem:10000000,fin:6000000,cv0:9000000,n:10,cvn:13800000,ltv:70});renderPols();update();};
 $('resetBtn').onclick=()=>{S=SAMPLE();init();};
-
-$('loan').addEventListener('input',()=>{S.loan=Math.max(0,num($('loan').value));update();});
-$('loan').addEventListener('blur',()=>{$('loan').value=f0(S.loan);});
 $('rate').addEventListener('input',()=>{S.rate=num($('rate').value);update();});
+$('rate2').addEventListener('input',()=>{S.rate2=num($('rate2').value);update();});
 $('stress').addEventListener('input',update);
 
 function update(){
-  const rows=S.rows, L=S.loan, rate=S.rate/100, s=num($('stress').value)/100;
-  let own=0,borrowed=0,mv=0,T=0,V=0,incOwn=0,incB=0,inc=0;
+  const rows=S.rows, r1=S.rate/100, r2=(S.rate2??S.rate)/100, s=num($('stress').value)/100;
+  let mv=0,own=0,L=0,Lpf=0,T=0,Tm=0,V=0,Vm=0,inc=0,incOwn=0,incB=0,cashInc=0,insInc=0;
   const outs=$('ledger').querySelectorAll('.lrow[data-i]');
   rows.forEach((r,i)=>{
-    const pa=r.mv*r.pp, cap=pa*r.ltv/100, ri=r.mv*r.y/100;
-    mv+=r.mv;inc+=ri;
-    if(r.src==='自有'){own+=r.mv;incOwn+=ri}else{borrowed+=r.mv;incB+=ri}
-    T+=cap;V+=pa;
-    const o=outs[i];if(o){o.querySelector('[data-out="cap"]').textContent=pa>0?f0(cap):'—';o.querySelector('[data-out="pp"]').textContent=r.mv<=0?'':pa>=r.mv-0.5?'全額設質':pa<=0?'未設質':'設質 '+pc(r.pp,0);const pin=o.querySelector('[data-f="pa"]');if(document.activeElement!==pin)pin.value=f0(pa);o.querySelector('[data-out="inc"]').textContent=f0(ri);}
+    const b=borrowOf(r), o=r.mv-b, pa=base(r)*r.pp, cap=pa*r.ltv/100, ri=r.mv*r.y/100;
+    mv+=r.mv;own+=o;inc+=ri;incOwn+=o*r.y/100;incB+=b*r.y/100;
+    L+=b;cashInc+=ri;
+    T+=cap;V+=pa;if(!STABLE[r.cat]){Tm+=cap;Vm+=pa}
+    const el=outs[i];if(!el)return;
+    el.querySelector('[data-out="cap"]').textContent=pa>0?f0(cap):'—';
+    const bb=base(r);el.querySelector('[data-out="pp"]').textContent=bb<=0?'':pa>=bb-0.5?'全額設質':pa<=0?'未設質':'設質 '+pc(r.pp,0);
+    const pin=el.querySelector('[data-f="pa"]');if(document.activeElement!==pin)pin.value=f0(pa);
+    el.querySelector('[data-out="inc"]').textContent=f0(ri);
   });
+  let polMv=0;
+  const pcs=$('pols').querySelectorAll('.pcard');
+  S.pols.forEach((p,i)=>{
+    const c=polCalc(p);
+    Lpf+=c.fin;own+=c.own;mv+=p.prem;polMv+=p.prem;inc+=c.gain;insInc+=c.gain;incOwn+=c.own*c.si;incB+=c.fin*c.si;
+    const el=pcs[i];if(!el)return;
+    el.querySelector('[data-o="own"]').textContent=f0(c.own);
+    el.querySelector('[data-o="si"]').textContent=pc(c.si)+' /年';
+    el.querySelector('[data-o="cap"]').innerHTML=`<span class="${c.cap<c.fin?'neg':''}">${f0(c.cap)}</span>`;
+    el.querySelector('[data-o="res"]').innerHTML=`
+      <div class="pflow"><div><span class="lbl">保單單利</span><b>${pc(c.si)}</b></div><span class="arrow">→</span>
+      <div><span class="lbl">扣融資利息後，自繳資金單利</span><b class="gold">${c.own>0?pc(c.ownSi):'—'}</b></div></div>
+      <p>客戶自繳 <b>${f0(c.own)}</b>、銀行融資 <b>${f0(c.fin)}</b>。保單每年約增值 ${f0(c.gain)}，扣融資利息 ${f0(c.int)} 後淨賺 ${f0(c.net)}；
+      第 ${p.n} 年累計約 <b>${f0(c.totN)}</b>（未計利率變動與匯率）。</p>
+      <p class="lbl">保費融資單獨核貸，不計入上方 Margin Call 檢核。</p>
+      ${c.cap<c.fin?`<p class="neg">融資 ${f0(c.fin)} 超過可融資上限 ${f0(c.cap)}，請調降融資金額或確認核貸條件。</p>`:''}`;
+  });
+  const Lm=L, Lt=L+Lpf, int1=L*r1, int2=Lpf*r2, int=int1+int2;
   $('totMv').textContent=f0(mv);$('totCap').textContent=f0(T);$('totInc').textContent=f0(inc);
+  $('loanTot').textContent=f0(L);
 
-  // margin
-  $('tTxt').textContent=f0(T);
-  const buf=L<=0?1:(T>0?1-L/T:-1);
-  const call=L>0&&T<=L;
-  const lvl=L<=0?'ok':call?'bad':buf<0.15?'warn':'ok';
-  const usage=T>0?L/T:(L>0?Infinity:0);
-  const sDrop=Math.max(0,-s);
-  const unspent=L-borrowed;
-  let note='';
-  if(Math.abs(unspent)>=1) note=unspent>0
-    ?`<div class="warnline">借款尚有 ${f0(unspent)} 未投入任何「借款」來源的商品。</div>`
-    :`<div class="warnline">「借款」來源商品合計 ${f0(borrowed)}，超過借款金額 ${f0(-unspent)}；請確認資金來源設定。</div>`;
+  // margin：只有市場型擔保品會跌
+  const call=Lm>0&&T<=Lm;
+  const usage=T>0?Lm/T:(Lm>0?Infinity:0);
+  const buf=Lm<=0?1:call?0:Tm>0?(T-Lm)/Tm:Infinity;   // 市場型擔保品可承受跌幅
+  const lvl=Lm<=0?'ok':call?'bad':buf<0.15?'warn':'ok';
+  let head;
+  if(Lm<=0)head='尚無借款';
+  else if(call)head='已觸發 Margin Call，30 天內須補足';
+  else if(!isFinite(buf)||buf>=1)head='市場全數歸零也不會被追繳';
+  else head=`基金、股票等市場型擔保品跌超過 <b>${pc(buf,1)}</b> 才會被追繳`;
   const usedW=Math.max(0,Math.min(1,usage))*100;
-  const head=L<=0?'尚無借款':call?'已觸發 Margin Call，30 天內須補足':`擔保品跌超過 <b>${pc(buf,1)}</b> 才會被追繳`;
   $('status').className='status '+lvl;
   $('status').innerHTML=`
     <div class="tag big2">${head}</div>
@@ -349,31 +434,34 @@ function update(){
       <div class="left"><span>${call?'':'還能借 '+pc(Math.max(0,1-usage),0)}</span></div></div>
     <div class="three">
       <div><div class="lbl">可借上限</div><div class="v">${f0(T)}</div></div>
-      <div><div class="lbl">已借</div><div class="v">${f0(L)}</div></div>
-      <div><div class="lbl">${call?'需補足':'還能借'}</div><div class="v">${f0(Math.abs(T-L))}</div></div>
+      <div><div class="lbl">已借</div><div class="v">${f0(Lm)}</div></div>
+      <div><div class="lbl">${call?'需補足':'還能借'}</div><div class="v">${f0(Math.abs(T-Lm))}</div></div>
     </div>
-    <div class="hint">可借上限 = 各商品設質金額 × LTV 加總。已借比例越高，擔保品能承受的跌幅越小。</div>
-    ${note}`;
+    <div class="hint">可借上限 = 各商品設質金額 × LTV 加總。定存、活存不隨市場漲跌，是穩定的擔保額度。保費融資單獨計算，不在此列。</div>`;
 
   // yield
-  const oldY=own>0?incOwn/own:0, int=L*rate, net=inc-int, newY=own>0?net/own:0;
+  const oldY=own>0?incOwn/own:0, net=inc-int, newY=own>0?net/own:0;
   $('oldY').textContent=pc(oldY);$('newY').textContent=pc(newY);
   const d=newY-oldY;
   $('deltaTxt').innerHTML=`淨殖利率${d>=0?'提高':'降低'} <b>${(Math.abs(d)*100).toFixed(2)}</b> 個百分點；年淨收益 <b>${f0(net)}</b>`;
   $('levTxt').textContent=own>0?(mv/own).toFixed(2)+' 倍':'—';
   $('monTxt').textContent=f0(net/12);
   $('ownTxt').textContent=f0(own);
-  const by=borrowed>0?incB/borrowed:0, sp=by-rate;
-  $('spreadTxt').innerHTML=borrowed>0?`<span class="${sp<0?'neg':''}">${(sp*100).toFixed(2)}%</span>`:'—';
+  const sp=Lt>0?incB/Lt-int/Lt:0;
+  $('spreadTxt').innerHTML=Lt>0?`<span class="${sp<0?'neg':''}">${(sp*100).toFixed(2)}%</span>`:'—';
+  const cash=cashInc-int;
   $('incBody').innerHTML=`
-   <tr><td>自有資金商品配息</td><td>${f0(own)}</td><td>${f0(incOwn)}</td><td>${f0(incOwn/12)}</td></tr>
-   <tr><td>借款買入商品配息</td><td>${f0(borrowed)}</td><td>${f0(incB)}</td><td>${f0(incB/12)}</td></tr>
-   <tr><td>質押借款利息（${S.rate}%）</td><td>${f0(L)}</td><td class="neg">−${f0(int)}</td><td class="neg">−${f0(int/12)}</td></tr>
-   <tr class="total"><td>淨收益</td><td>${f0(own)}</td><td>${f0(net)}</td><td>${f0(net/12)}</td></tr>`;
+   <tr><td>現金配息（基金、債券、存款等）</td><td>${f0(mv-polMv)}</td><td>${f0(cashInc)}</td><td>${f0(cashInc/12)}</td></tr>
+   ${insInc?`<tr><td>保單增值（單利，累積在保單，非現金）</td><td>${f0(polMv)}</td><td>${f0(insInc)}</td><td>${f0(insInc/12)}</td></tr>`:''}
+   ${L?`<tr><td>質押借款利息（${S.rate}%）</td><td>${f0(L)}</td><td class="neg">−${f0(int1)}</td><td class="neg">−${f0(int1/12)}</td></tr>`:''}
+   ${Lpf?`<tr><td>保費融資利息（${S.rate2}%）</td><td>${f0(Lpf)}</td><td class="neg">−${f0(int2)}</td><td class="neg">−${f0(int2/12)}</td></tr>`:''}
+   <tr class="total"><td>淨收益</td><td>${f0(own)}</td><td>${f0(net)}</td><td>${f0(net/12)}</td></tr>
+   ${insInc?`<tr><td>每月現金流（現金配息 − 利息）</td><td></td><td class="${cash<0?'neg':''}">${f0(cash)}</td><td class="${cash<0?'neg':''}">${f0(cash/12)}</td></tr>`:''}`;
+  $('cashNote').textContent=insInc?(cash<0?'保單增值不發放現金，利息需由其他資金支付：目前每月現金配息不足以支付利息。':'保單增值累積在保價金、不發放現金；利息由每月現金配息支付。'):'';
 
-  // stress
-  const k=1+s, Ts=T*k, Vs=V*k, us=Ts>0?L/Ts:(L>0?Infinity:0);
-  const cure=L>0&&Ts<=L?L-Ts:0, wLtv=V>0?T/V:0;
+  // stress：只套用在市場型擔保品
+  const k=1+s, Ts=T-Tm+Tm*k, Vs=V-Vm+Vm*k, us=Ts>0?Lm/Ts:(Lm>0?Infinity:0);
+  const cure=Lm>0&&Ts<=Lm?Lm-Ts:0, wLtv=V>0?T/V:0;
   $('stressTxt').textContent=(s>0?'+':'')+(s*100).toFixed(0)+'%';
   $('sV').textContent=f0(Vs);$('sT').textContent=f0(Ts);
   $('sU').innerHTML=`<span class="${us>=1?'neg':''}">${isFinite(us)?pc(us,1):'—'}</span>`;
@@ -381,9 +469,9 @@ function update(){
   $('sC2').innerHTML=cure>0&&wLtv>0?`<span class="neg">${f0(cure/wLtv)}</span>`:'0';
   save();
 }
-
-function init(){$('loan').value=f0(S.loan);$('rate').value=S.rate;renderLedger();update();}
+function init(){$('rate').value=S.rate;$('rate2').value=S.rate2??S.rate;renderLedger();renderPols();update();}
 init();
 </script>
+
 </body>
 </html>
